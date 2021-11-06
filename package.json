@@ -1,0 +1,45 @@
+{
+  "name": "video-creator",
+  "version": "0.1.0",
+  "private": true,
+  "devDependencies": {
+    "@babel/core": "^7.16.0",
+    "@babel/parser": "^7.16.2",
+    "@babel/plugin-syntax-jsx": "^7.16.0",
+    "@babel/preset-react": "^7.16.0",
+    "@babel/register": "^7.16.0",
+    "@testing-library/jest-dom": "^5.15.0",
+    "@testing-library/react": "^12.1.2",
+    "@testing-library/user-event": "^13.5.0",
+    "jsdom": "^18.0.1",
+    "jsx-node": "^0.3.1",
+    "node-html-to-image": "^3.2.0",
+    "npm-check-updates": "^12.0.0",
+    "prettier": "^2.4.1",
+    "prism-react-renderer": "^1.2.1",
+    "react": "^17.0.2",
+    "react-code-blocks": "0.0.9-0",
+    "react-dom": "^17.0.2",
+    "styled-components": "^5.3.3",
+    "videoshow": "^0.1.12"
+  },
+  "scripts": {
+    "bump": "ncu -u -t minor"
+  },
+  "browserslist": {
+    "production": [
+      ">0.2%",
+      "not dead",
+      "not op_mini all"
+    ],
+    "development": [
+      "last 1 chrome version",
+      "last 1 firefox version",
+      "last 1 safari version"
+    ]
+  },
+  "dependencies": {
+    "esm": "^3.2.25",
+    "react-highlight-codeblock": "^1.1.3"
+  }
+}
