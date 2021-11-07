@@ -13,6 +13,14 @@ const createScreenshot = async (html) => {
     await nodeHtmlToImage({
         output: './image.png',
         html,
+        type: 'png',
+        quality: 100,
+        puppeteerArgs: {
+            defaultViewport: {
+                width: 1920 / 4,
+                height: 1080 / 4,
+            }
+        },
     });
 
     console.log(html);
