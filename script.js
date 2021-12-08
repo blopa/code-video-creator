@@ -23,7 +23,8 @@ const createScreenshot = async (html) => {
         },
     });
 
-    console.log(html);
+    // console.log(html);
 }
 
 createScreenshot(html);
+fs.writeFileSync("index.html", html);
