@@ -1,13 +1,12 @@
 require('@babel/register');
-const func = require('./utils');
+const { generateHtml } = require('./utils');
 const nodeHtmlToImage = require('node-html-to-image');
 const prettier = require('prettier');
-const fs = require('fs');
-const data = fs.readFileSync('./Test.jsx', {encoding:'utf8'});
+const { readFileSync, writeFileSync } = require('fs');
 
+const data = readFileSync('./Test.jsx', { encoding: 'utf8' });
 const code = prettier.format(data, { parser: "babel" });
-
-const html = func(code);
+const html = generateHtml(code);
 
 const createScreenshot = async (html) => {
     await nodeHtmlToImage({
@@ -27,4 +26,4 @@ const createScreenshot = async (html) => {
 }
 
 createScreenshot(html);
-fs.writeFileSync("index.html", html);
+writeFileSync("index.html", html);

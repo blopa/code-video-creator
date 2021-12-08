@@ -8,7 +8,7 @@ import { renderToStaticMarkup } from "react-dom/server";
 // const util = require('util');
 // const babelParser = require("@babel/parser");
 
-module.exports = (code) => {
+export const generateHtml = (code) => {
     // console.log(code);
     // const lala = parse(code);
     // console.log(lala);
