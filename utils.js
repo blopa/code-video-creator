@@ -8,7 +8,7 @@ import { renderToStaticMarkup } from "react-dom/server";
 // const util = require('util');
 // const babelParser = require("@babel/parser");
 
-export const generateHtml = (code) => {
+export const generateHtml = (code, linesToShow) => {
     // console.log(code);
     // const lala = parse(code);
     // console.log(lala);
@@ -25,6 +25,7 @@ export const generateHtml = (code) => {
         <CodeHighlighter
             code={code}
             language="javascript"
+            linesToShow={linesToShow}
         />
     ));
 }
