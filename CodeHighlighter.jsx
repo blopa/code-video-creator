@@ -6,17 +6,18 @@ const style = {
     width: `${WIDTH}px`,
     height: `${HEIGHT}px`,
     background: '#272822',
+    transform: 'scale(4)',
+    transformOrigin: '0% 0% 0px',
 };
 
 const hideCodeStyle = (lines) => {
     return {
         ...style,
         position: 'absolute',
-        marginTop: `${24 + (15 * lines)}px`,
+        marginTop: `${22 + (15 * lines)}px`,
     };
 };
 
-// TODO enhance quality of this component
 function CodeHighlighter({
     code,
     language,

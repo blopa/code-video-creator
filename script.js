@@ -34,5 +34,5 @@ totalLines.forEach((line, index) => {
     createScreenshot(html, index);
 });
 
-// const html = generateHtml(code, 10);
-// writeFileSync("index.html", html);
+const html = generateHtml(code, 10);
+writeFileSync("index.html", html);
