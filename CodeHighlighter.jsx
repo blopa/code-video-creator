@@ -16,6 +16,7 @@ const hideCodeStyle = (lines) => {
     };
 };
 
+// TODO enhance quality of this component
 function CodeHighlighter({
     code,
     language,
