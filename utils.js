@@ -4,7 +4,6 @@ import CodeHighlighter from './CodeHighlighter.jsx';
 import { renderToStaticMarkup } from "react-dom/server";
 
 export const generateHtml = (code, linesToShow) => {
-
     return renderToStaticMarkup((
         <CodeHighlighter
             code={code}

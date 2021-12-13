@@ -1,27 +1,27 @@
 import React from 'react';
 import CodeBlock from 'react-highlight-codeblock';
-import { HEIGHT, WIDTH } from "./sizes";
+import { HEIGHT, WIDTH, MAX_LINES, SCALE } from "./sizes";
 
 const style = {
     width: `${WIDTH}px`,
     height: `${HEIGHT}px`,
     background: '#272822',
-    transform: 'scale(4)',
+    transform: `scale(${SCALE})`,
     transformOrigin: '0% 0% 0px',
 };
 
-const hideCodeStyle = (lines) => {
+const hideCodeStyle = (linesToShow) => {
     return {
         ...style,
         position: 'absolute',
-        marginTop: `${22 + (15 * lines)}px`,
+        marginTop: `${22 + (15 * linesToShow)}px`,
     };
 };
 
 function CodeHighlighter({
     code,
     language,
-    linesToShow = 45,
+    linesToShow = MAX_LINES,
 }) {
     return (
         <div style={style}>
@@ -30,7 +30,10 @@ function CodeHighlighter({
                     .wrapper { background: #272822 }
                 `}}
             />
-            <div style={hideCodeStyle(linesToShow)} />
+            <div
+                id="line-hider"
+                style={hideCodeStyle(linesToShow)}
+            />
             <CodeBlock
                 code={code}
                 callback={code => console.log(code)}

@@ -4,9 +4,11 @@ const nodeHtmlToImage = require('node-html-to-image');
 const prettier = require('prettier');
 const videoshow = require('videoshow');
 const { readFileSync, writeFileSync, mkdirSync, rmdirSync } = require('fs');
-const { WIDTH, HEIGHT } = require("./sizes");
+const { WIDTH, HEIGHT, MAX_LINES, SCALE } = require("./sizes");
 
-const createScreenshot = async (html, filePath) => {
+const createScreenshot = async (html, filePath, linesToShow) => {
+    const linePad = Math.max(0, linesToShow - MAX_LINES);
+
     await nodeHtmlToImage({
         output: filePath,
         html,
@@ -16,8 +18,16 @@ const createScreenshot = async (html, filePath) => {
             defaultViewport: {
                 width: WIDTH,
                 height: HEIGHT,
+                ...linePad && {
+                    margin: `${(24 * SCALE) + ((15 * SCALE) * linePad)}`,
+                }
             }
         },
+        // beforeScreenshot: (page) => {
+        //     page.evaluate(() => {
+        //         window.scrollBy(2000, 2000);
+        //     });
+        // }
     });
 }
 
@@ -60,7 +70,7 @@ const generateFiles = async (filePath) => {
     const lines = code.split('\n');
 
     const html = generateHtml(code, lines.length);
-    writeFileSync("index.html", html);
+    writeFileSync("./html/index.html", html);
 
     const images = [];
     let index = 0;
@@ -68,8 +78,9 @@ const generateFiles = async (filePath) => {
         const filePath = `${fileOutput}${index}.png`;
 
         const html = generateHtml(code, index);
+        writeFileSync(`./html/index-${index}.html`, html);
         console.log(`Creating image: ${filePath}`);
-        await createScreenshot(html, filePath);
+        await createScreenshot(html, filePath, index);
         console.log('Done!');
         images.push(filePath);
         index += 1;
