@@ -1,13 +1,14 @@
-function Text() {
+function Test() {
     console.log(1);
     console.log(1);
     console.log(1);
     console.log(1);
     console.log(1);
     console.log(1);
+
     return (
-        <p>Hello World</p>
+        <p>Hello World!</p>
     );
 }
 
-export default Text;
+export default Test;
