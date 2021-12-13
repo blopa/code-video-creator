@@ -3,7 +3,7 @@ const { generateHtml } = require('./utils');
 const nodeHtmlToImage = require('node-html-to-image');
 const prettier = require('prettier');
 const videoshow = require('videoshow');
-const { readFileSync, writeFileSync, mkdirSync } = require('fs');
+const { readFileSync, writeFileSync, mkdirSync, rmdirSync } = require('fs');
 const { WIDTH, HEIGHT } = require("./sizes");
 
 const createScreenshot = async (html, filePath) => {
@@ -50,18 +50,22 @@ const createVideo = (images) => {
 }
 
 const generateFiles = async (filePath) => {
+    const fileOutput = `./frames/`;
+    mkdirSync(fileOutput, { recursive: true });
+    rmdirSync(fileOutput, { recursive: true });
+    mkdirSync(fileOutput, { recursive: true });
+
     const data = readFileSync(filePath, { encoding: 'utf8' });
     const code = prettier.format(data, { parser: "babel" });
     const lines = code.split('\n');
-    mkdirSync(`./frames/`, { recursive: true });
 
-    const html = generateHtml(code, 10);
+    const html = generateHtml(code, lines.length);
     writeFileSync("index.html", html);
 
     const images = [];
     let index = 0;
     for (const line of lines) {
-        const filePath = `./frames/${index}.png`;
+        const filePath = `${fileOutput}${index}.png`;
 
         const html = generateHtml(code, index);
         console.log(`Creating image: ${filePath}`);
@@ -73,7 +77,6 @@ const generateFiles = async (filePath) => {
 
     console.log('Creating video...')
     await createVideo(images);
-    console.log('Done!');
 }
 
 const file = process.argv[2] || './Test.jsx';
