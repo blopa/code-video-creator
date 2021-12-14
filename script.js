@@ -1,34 +1,36 @@
 require('@babel/register');
 const { generateHtml } = require('./utils');
-const nodeHtmlToImage = require('node-html-to-image');
+const puppeteer = require('puppeteer');
 const prettier = require('prettier');
 const videoshow = require('videoshow');
 const { readFileSync, writeFileSync, mkdirSync, rmdirSync } = require('fs');
-const { WIDTH, HEIGHT, MAX_LINES, SCALE } = require("./sizes");
+const { WIDTH, HEIGHT } = require("./sizes");
 
-const createScreenshot = async (html, filePath, linesToShow) => {
-    const linePad = Math.max(0, linesToShow - MAX_LINES);
+const createScreenshot = async (html, filePath) => {
+    const browser = await puppeteer.launch({
+        headless: true,
+        args: [`--window-size=${WIDTH},${HEIGHT}`],
+        defaultViewport: {
+            width: WIDTH,
+            height: HEIGHT,
+        }
+    });
 
-    await nodeHtmlToImage({
-        output: filePath,
-        html,
-        type: 'png',
-        quality: 100,
-        puppeteerArgs: {
-            defaultViewport: {
-                width: WIDTH,
-                height: HEIGHT,
-                ...linePad && {
-                    margin: `${(24 * SCALE) + ((15 * SCALE) * linePad)}`,
-                }
-            }
-        },
-        // beforeScreenshot: (page) => {
-        //     page.evaluate(() => {
-        //         window.scrollBy(2000, 2000);
-        //     });
+    const page = await browser.newPage();
+    page.setContent(html);
+
+    await page.screenshot({
+        path: filePath,
+        // omitBackground: true,
+        // clip: {
+        //     x: rect.left - padding,
+        //     y: rect.top - padding,
+        //     width: rect.width + padding * 2,
+        //     height: rect.height + padding * 2
         // }
     });
+
+    await browser.close();
 }
 
 const createVideo = (images) => {
@@ -77,10 +79,10 @@ const generateFiles = async (filePath) => {
     for (const line of lines) {
         const filePath = `${fileOutput}${index}.png`;
 
-        const html = generateHtml(code, index);
+        const html = generateHtml(code, index + 1);
         writeFileSync(`./html/index-${index}.html`, html);
         console.log(`Creating image: ${filePath}`);
-        await createScreenshot(html, filePath, index);
+        await createScreenshot(html, filePath);
         console.log('Done!');
         images.push(filePath);
         index += 1;
