@@ -12,6 +12,7 @@ const getMainStyle = (linesToShow) => {
         transform: `scale(${SCALE})`,
         transformOrigin: '0% 0% 0px',
         margin: 0,
+        marginTop: `-${7 * SCALE}`,
         ...linePad && {
             marginTop: `-${(22 * SCALE) + ((15 * SCALE) * (linePad - 1))}`,
         }
@@ -25,6 +26,7 @@ const getHideCodeStyle = (linesToShow) => {
         width: '100%',
         position: 'absolute',
         marginTop: `${22 + (15 * (linesToShow - 1))}px`,
+        marginLeft: '32px',
     };
 };
 
