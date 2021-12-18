@@ -67,12 +67,13 @@ const generateFiles = async (filePath) => {
     rmdirSync(fileOutput, { recursive: true });
     mkdirSync(fileOutput, { recursive: true });
 
-    const data = readFileSync(filePath, { encoding: 'utf8' });
-    const code = prettier.format(data, { parser: "babel" });
+    const code = readFileSync(filePath, { encoding: 'utf8' });
+    // const data = readFileSync(filePath, { encoding: 'utf8' });
+    // const code = prettier.format(data, { parser: "babel" });
     const lines = code.split('\n');
 
     const html = generateHtml(code, lines.length);
-    writeFileSync("./html/index.html", html);
+    // writeFileSync("./html/index.html", html);
 
     const images = [];
     let index = 0;
