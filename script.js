@@ -3,7 +3,9 @@ const { generateHtml } = require('./utils');
 const puppeteer = require('puppeteer');
 const prettier = require('prettier');
 const videoshow = require('videoshow');
+
 const { readFileSync, writeFileSync, mkdirSync, rmdirSync } = require('fs');
+
 const { WIDTH, HEIGHT } = require("./sizes");
 
 const createScreenshot = async (html, filePath) => {
@@ -72,7 +74,7 @@ const generateFiles = async (filePath) => {
     // const code = prettier.format(data, { parser: "babel" });
     const lines = code.split('\n');
 
-    const html = generateHtml(code, lines.length);
+    const html = generateHtml(code, lines.length, lines.length);
     // writeFileSync("./html/index.html", html);
 
     const images = [];
@@ -80,7 +82,7 @@ const generateFiles = async (filePath) => {
     for (const line of lines) {
         const filePath = `${fileOutput}${index}.png`;
 
-        const html = generateHtml(code, index + 1);
+        const html = generateHtml(code, index + 1, lines.length);
         writeFileSync(`./html/index-${index}.html`, html);
         console.log(`Creating image: ${filePath}`);
         await createScreenshot(html, filePath);

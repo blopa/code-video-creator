@@ -1,5 +1,6 @@
 import React from 'react';
-import CodeBlock from 'react-highlight-codeblock';
+import Prism from "prismjs";
+// import "prism-themes/themes/prism-cb.css";
 import { HEIGHT, WIDTH, MAX_LINES, SCALE } from "./sizes";
 
 const getMainStyle = (linesToShow) => {
@@ -34,27 +35,42 @@ function CodeHighlighter({
     code,
     language,
     linesToShow = MAX_LINES,
+    totalLines,
 }) {
+    const html = Prism.highlight(code, Prism.languages[language], language);
+    const lines = new Array(totalLines + 1).fill(null).map((v, index) => {
+        return `<span>${index + 1}</span>`;
+    }).join('');
+
     return (
         <html>
             <style
                 dangerouslySetInnerHTML={{__html: `
-                    .wrapper { background: #272822 }
+                    .wrapper { background: #272822; display: flex; }
+                    .lines { display: grid; }
                 `}}
             />
             <body style={getMainStyle(linesToShow)}>
-                <div
-                    id="line-hider"
-                    style={getHideCodeStyle(linesToShow)}
-                />
-                <CodeBlock
-                    code={code}
-                    callback={code => console.log(code)}
-                    // editer={true}
-                    language={language}
-                    style="monokai"
-                    showLineNumbers
-                />
+                <div className="wrapper">
+                    <div
+                        className="lines"
+                        dangerouslySetInnerHTML={{
+                            __html: lines,
+                        }}
+                    />
+                    <div
+                        id="line-hider"
+                        style={getHideCodeStyle(linesToShow)}
+                    />
+                    <pre>
+                        <code
+                            style={{ fontFamily: "Consolas,Monaco,'Andale Mono','Ubuntu Mono',monospace" }}
+                            dangerouslySetInnerHTML={{
+                                __html: html,
+                            }}
+                        />
+                    </pre>
+                </div>
             </body>
         </html>
     );
