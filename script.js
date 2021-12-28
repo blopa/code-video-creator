@@ -1,7 +1,7 @@
 require('@babel/register');
 const { generateHtml } = require('./utils');
 const puppeteer = require('puppeteer');
-const prettier = require('prettier');
+// const prettier = require('prettier');
 const videoshow = require('videoshow');
 
 const { readFileSync, writeFileSync, mkdirSync, rmdirSync } = require('fs');
@@ -75,7 +75,8 @@ const generateFiles = async (filePath) => {
     const lines = code.split('\n');
 
     const html = generateHtml(code, lines.length, lines.length);
-    // writeFileSync("./html/index.html", html);
+    writeFileSync("./html/index.html", html);
+    return;
 
     const images = [];
     let index = 0;
