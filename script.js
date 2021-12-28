@@ -75,15 +75,16 @@ const generateFiles = async (filePath) => {
     const lines = code.split('\n');
 
     const html = generateHtml(code, lines.length, lines.length);
-    writeFileSync("./html/index.html", html);
-    return;
+    // writeFileSync("./html/index.html", html);
 
     const images = [];
     let index = 0;
+    let codeToParse = '';
     for (const line of lines) {
         const filePath = `${fileOutput}${index}.png`;
 
-        const html = generateHtml(code, index + 1, lines.length);
+        codeToParse = `${codeToParse}${line}\n`;
+        const html = generateHtml(codeToParse, index + 1, lines.length);
         writeFileSync(`./html/index-${index}.html`, html);
         console.log(`Creating image: ${filePath}`);
         await createScreenshot(html, filePath);

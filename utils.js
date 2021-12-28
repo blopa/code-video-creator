@@ -16,7 +16,6 @@ export const generateHtml = (code, linesToShow, totalLines) => {
         <CodeHighlighter
             code={code}
             language="javascript"
-            linesToShow={linesToShow}
             totalLines={totalLines}
         />
     ));
