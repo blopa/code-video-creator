@@ -3,6 +3,7 @@ const { generateHtml } = require('./utils');
 const puppeteer = require('puppeteer');
 // const prettier = require('prettier');
 const videoshow = require('videoshow');
+const divider = 2;
 
 const { readFileSync, writeFileSync, mkdirSync, rmdirSync } = require('fs');
 
@@ -41,11 +42,11 @@ const createScreenshot = async (html, filePath, posY) => {
 const createVideo = (images) => {
     const videoOptions = {
         fps: 25,
-        loop: 2, // seconds
+        loop: 1 / divider, // seconds - on 25fps
         transition: false,
         videoBitrate: 1024,
         videoCodec: 'libx264',
-        size: '1920x?',
+        size: `${WIDTH}x?`,
         audioBitrate: '128k',
         audioChannels: 2,
         format: 'mp4',
@@ -83,6 +84,7 @@ const generateFiles = async (filePath) => {
             code,
             line: index,
             action: ADD,
+            duration: 2, // seconds
         };
     });
     // codeLines.push({
@@ -102,10 +104,10 @@ const generateFiles = async (filePath) => {
     const images = [];
     let index = 1;
     let codeToParse = [];
-    let posX = 5;
+    let posX = 7;
     const scrollThreshold = (MAX_LINES / 2) + 1;
     for (const codeObj of codeLines) {
-        const { code, action, line } = codeObj;
+        const { code, action, line, duration } = codeObj;
         const filePath = `${fileOutput}${index}.png`;
 
         if (action === ADD) {
@@ -129,7 +131,9 @@ const generateFiles = async (filePath) => {
         );
 
         console.log('Done!');
-        images.push(filePath);
+        new Array(duration * divider).fill(null).forEach(() => {
+            images.push(filePath);
+        });
         index += 1;
     }
 
