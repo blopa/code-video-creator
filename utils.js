@@ -11,7 +11,7 @@ const styling = readFileSync(
     { encoding: 'utf8' }
 );
 
-export const generateHtml = (code, linesToShow, totalLines) => {
+export const generateHtml = (code, totalLines) => {
     const html = renderToStaticMarkup((
         <CodeHighlighter
             code={code}

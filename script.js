@@ -6,7 +6,7 @@ const videoshow = require('videoshow');
 
 const { readFileSync, writeFileSync, mkdirSync, rmdirSync } = require('fs');
 
-const { WIDTH, HEIGHT, MAX_LINES, SCALE, ADD} = require("./constants");
+const { WIDTH, HEIGHT, MAX_LINES, SCALE, ADD, REMOVE} = require("./constants");
 
 const createScreenshot = async (html, filePath, posY) => {
     const browser = await puppeteer.launch({
@@ -90,36 +90,37 @@ const generateFiles = async (filePath) => {
     // writeFileSync("./html/index.html", html);
 
     const images = [];
-    let index = 0;
+    let index = 1;
     let codeToParse = [];
     let posX = 5;
     const scrollThreshold = (MAX_LINES / 2) + 1;
     for (const codeObj of codeLines) {
         const { code, action, line } = codeObj;
-        index += 1;
         const filePath = `${fileOutput}${index}.png`;
 
         if (action === ADD) {
             codeToParse.splice(line, 0, code);
+        } else if (action === REMOVE) {
+            codeToParse.splice(line, 1);
         }
 
         const html = generateHtml(
             codeToParse.join('\n'),
-            index,
             codeLines.length
         );
 
         // writeFileSync(`./html/index-${index}.html`, html);
         console.log(`Creating image: ${filePath}`);
-        const diff = index - scrollThreshold;
+        const diff = line - scrollThreshold;
         await createScreenshot(
             html,
             filePath,
-            Math.max(posX + (16 * diff * SCALE), 0)
+            Math.max((posX + (16 * diff)) * SCALE, 0)
         );
 
         console.log('Done!');
         images.push(filePath);
+        index += 1;
     }
 
     console.log('Creating video...')
