@@ -39,6 +39,7 @@ const createScreenshot = async (html, filePath, posY) => {
     await browser.close();
 }
 
+// consider using https://www.npmjs.com/package/puppeteer-video-recorder
 const createVideo = (images) => {
     const videoOptions = {
         fps: 25,
