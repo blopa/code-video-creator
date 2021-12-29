@@ -85,6 +85,16 @@ const generateFiles = async (filePath) => {
             action: ADD,
         };
     });
+    // codeLines.push({
+    //     code: null,
+    //     line: 5,
+    //     action: ADD,
+    // });
+    // codeLines.push({
+    //     code: '    console.log("Hello World");',
+    //     line: 5,
+    //     action: ADD,
+    // });
 
     // const html = generateHtml(code, lines.length, lines.length);
     // writeFileSync("./html/index.html", html);
@@ -105,7 +115,7 @@ const generateFiles = async (filePath) => {
         }
 
         const html = generateHtml(
-            codeToParse.join('\n'),
+            codeToParse.filter((s) => s !== null).join('\n'),
             codeLines.length
         );
 
