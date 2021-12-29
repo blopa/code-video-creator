@@ -7,7 +7,7 @@ const divider = 2;
 
 const { readFileSync, writeFileSync, mkdirSync, rmdirSync } = require('fs');
 
-const { WIDTH, HEIGHT, MAX_LINES, SCALE, ADD, REMOVE} = require("./constants");
+const { WIDTH, HEIGHT, MAX_LINES, SCALE, ADD, REMOVE, REPLACE} = require("./constants");
 
 const createScreenshot = async (html, filePath, posY) => {
     const browser = await puppeteer.launch({
@@ -97,6 +97,11 @@ const generateFiles = async (filePath) => {
     //     line: 5,
     //     action: ADD,
     // });
+    // codeLines.push({
+    //     code: '    console.log("Hello World");',
+    //     line: 4,
+    //     action: REPLACE,
+    // });
 
     // const html = generateHtml(code, lines.length, lines.length);
     // writeFileSync("./html/index.html", html);
@@ -107,13 +112,15 @@ const generateFiles = async (filePath) => {
     let posX = 7;
     const scrollThreshold = (MAX_LINES / 2) + 1;
     for (const codeObj of codeLines) {
-        const { code, action, line, duration } = codeObj;
+        const { code, action, line, duration = 1 } = codeObj;
         const filePath = `${fileOutput}${index}.png`;
 
         if (action === ADD) {
             codeToParse.splice(line, 0, code);
         } else if (action === REMOVE) {
-            codeToParse.splice(line, 1);
+            codeToParse.splice(line - 1, 1);
+        } else if (action === REPLACE) {
+            codeToParse.splice(line - 1, 1, code);
         }
 
         const html = generateHtml(
