@@ -1,6 +1,6 @@
 import React from 'react';
 import Prism from "prismjs";
-import { HEIGHT, WIDTH, SCALE } from "./sizes";
+import { HEIGHT, WIDTH, SCALE } from "./constants";
 
 function CodeHighlighter({
     code,

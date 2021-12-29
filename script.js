@@ -6,7 +6,7 @@ const videoshow = require('videoshow');
 
 const { readFileSync, writeFileSync, mkdirSync, rmdirSync } = require('fs');
 
-const { WIDTH, HEIGHT, MAX_LINES, SCALE } = require("./sizes");
+const { WIDTH, HEIGHT, MAX_LINES, SCALE, ADD} = require("./constants");
 
 const createScreenshot = async (html, filePath, posY) => {
     const browser = await puppeteer.launch({
@@ -77,32 +77,46 @@ const generateFiles = async (filePath) => {
     // const data = readFileSync(filePath, { encoding: 'utf8' });
     // const code = prettier.format(data, { parser: "babel" });
     const lines = code.split('\n');
+    const codeLines = lines.map((code, index) => {
+        // TODO
+        return {
+            code,
+            line: index,
+            action: ADD,
+        };
+    });
 
     // const html = generateHtml(code, lines.length, lines.length);
     // writeFileSync("./html/index.html", html);
 
     const images = [];
     let index = 0;
-    let codeToParse = '';
-    let posX = 21;
-    const lineToStartScrolling = (MAX_LINES / 2) + 1;
-    for (const line of lines) {
+    let codeToParse = [];
+    let posX = 5;
+    const scrollThreshold = (MAX_LINES / 2) + 1;
+    for (const codeObj of codeLines) {
+        const { code, action, line } = codeObj;
         index += 1;
         const filePath = `${fileOutput}${index}.png`;
 
-        codeToParse = `${codeToParse}${line}\n`;
-        const html = generateHtml(codeToParse, index, lines.length);
+        if (action === ADD) {
+            codeToParse.splice(line, 0, code);
+        }
+
+        const html = generateHtml(
+            codeToParse.join('\n'),
+            index,
+            codeLines.length
+        );
+
         // writeFileSync(`./html/index-${index}.html`, html);
         console.log(`Creating image: ${filePath}`);
+        const diff = index - scrollThreshold;
         await createScreenshot(
             html,
             filePath,
-            index > lineToStartScrolling ? (posX * SCALE) : 0
+            Math.max(posX + (16 * diff * SCALE), 0)
         );
-
-        if (index > lineToStartScrolling) {
-            posX += 16;
-        }
 
         console.log('Done!');
         images.push(filePath);

@@ -1,13 +1,19 @@
+import { useState } from 'react';
+
 function Test() {
-    console.log(1);
-    console.log(1);
-    console.log(1);
-    console.log(1);
-    console.log(1);
-    console.log(1);
+    const [val, setVal] = useState(1);
 
     return (
-        <p>Hello World!</p>
+        <div>
+            <p>Hello World!</p>
+            <p>{val}</p>
+            <button
+                type="button"
+                onClick={() => setVal(val + 1)}
+            >
+                Click
+            </button>
+        </div>
     );
 }
 
