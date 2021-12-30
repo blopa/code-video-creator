@@ -1,5 +1,5 @@
 require('@babel/register');
-const { generateHtml, sleep} = require('./utils');
+const { generateHtml } = require('./utils');
 const puppeteer = require('puppeteer');
 // const prettier = require('prettier');
 const { PuppeteerScreenRecorder } = require('puppeteer-screen-recorder');
@@ -34,15 +34,26 @@ const createVideo = async (htmls) => {
     const recorder = new PuppeteerScreenRecorder(page, config);
     await recorder.start('./output.mp4');
 
-    for (const {html, posY, duration} of htmls) {
+    let prevPosY = null;
+    for (const { html, posY, duration } of htmls) {
+        if (prevPosY) {
+            await page.waitForTimeout(0.18 * Math.abs(posY - prevPosY));
+        }
+
         await page.setContent(html);
-        await page.evaluate((scrollY) => {
-            window.scrollTo({
-                top: scrollY,
-                behavior: 'smooth',
-            });
-        }, posY);
-        await sleep(duration * 1000);
+
+        if (posY) {
+            await page.evaluate((scrollY) => {
+                // 180ms per 1000px
+                window.scrollTo({
+                    top: scrollY,
+                    behavior: 'smooth',
+                });
+            }, posY);
+        }
+
+        await page.waitForTimeout(duration * 1000);
+        prevPosY = posY;
     }
 
     await recorder.stop();
@@ -74,6 +85,11 @@ const generateFiles = async (filePath) => {
     //     action: ADD,
     // });
     // codeLines.push({
+    //     code: null,
+    //     line: 5,
+    //     action: ADD,
+    // });
+    // codeLines.push({
     //     code: '    console.log("Hello World");',
     //     line: 5,
     //     action: ADD,
@@ -87,7 +103,6 @@ const generateFiles = async (filePath) => {
     // const html = generateHtml(code, lines.length, lines.length);
     // writeFileSync("./html/index.html", html);
 
-    const images = [];
     const htmls = [];
     let index = 1;
     let codeToParse = [];
