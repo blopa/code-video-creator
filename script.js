@@ -37,7 +37,10 @@ const createVideo = async (htmls) => {
     for (const {html, posY, duration} of htmls) {
         await page.setContent(html);
         await page.evaluate((scrollY) => {
-            window.scrollBy(0, scrollY);
+            window.scrollTo({
+                top: scrollY,
+                behavior: 'smooth',
+            });
         }, posY);
         await sleep(duration * 1000);
     }
