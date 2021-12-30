@@ -29,3 +29,6 @@ export const generateHtml = (code, totalLines) => {
 
     return document.getElementsByTagName('html')[0].outerHTML;
 }
+
+// https://stackoverflow.com/a/64762041/4307769
+export const sleep = t => new Promise(s => setTimeout(s, t));

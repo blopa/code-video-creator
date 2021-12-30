@@ -1,15 +1,15 @@
 require('@babel/register');
-const { generateHtml } = require('./utils');
+const { generateHtml, sleep} = require('./utils');
 const puppeteer = require('puppeteer');
 // const prettier = require('prettier');
-const videoshow = require('videoshow');
-const divider = 2;
+const { PuppeteerScreenRecorder } = require('puppeteer-screen-recorder');
+
 
 const { readFileSync, writeFileSync, mkdirSync, rmdirSync } = require('fs');
 
 const { WIDTH, HEIGHT, MAX_LINES, SCALE, ADD, REMOVE, REPLACE} = require("./constants");
 
-const createScreenshot = async (html, filePath, posY) => {
+const createVideo = async (htmls) => {
     const browser = await puppeteer.launch({
         headless: true,
         args: [`--window-size=${WIDTH},${HEIGHT}`],
@@ -20,53 +20,30 @@ const createScreenshot = async (html, filePath, posY) => {
     });
 
     const page = await browser.newPage();
-    page.setContent(html);
-    await page.evaluate((scrollY) => {
-        window.scrollBy(0, scrollY);
-    }, posY);
 
-    await page.screenshot({
-        path: filePath,
-        // omitBackground: true,
-        // clip: {
-        //     y: posY,
-        //     x: 0,
-        //     width: WIDTH,
-        //     height: HEIGHT
-        // }
-    });
-
-    await browser.close();
-}
-
-// consider using https://www.npmjs.com/package/puppeteer-video-recorder
-const createVideo = (images) => {
-    const videoOptions = {
+    const config = {
+        followNewTab: false,
         fps: 25,
-        loop: 1 / divider, // seconds - on 25fps
-        transition: false,
-        videoBitrate: 1024,
-        videoCodec: 'libx264',
-        size: `${WIDTH}x?`,
-        audioBitrate: '128k',
-        audioChannels: 2,
-        format: 'mp4',
-        pixelFormat: 'yuv420p'
+        ffmpeg_Path: null,
+        videoFrame: {
+            width: WIDTH,
+            height: HEIGHT,
+        },
+        aspectRatio: '16:9',
     };
+    const recorder = new PuppeteerScreenRecorder(page, config);
+    await recorder.start('./output.mp4');
 
-    return videoshow(images, videoOptions)
-        .save('./video.mp4')
-        .on('start', function (command) {
-            console.log('ffmpeg process started:', command);
-        })
-        .on('error', function (err, stdout, stderr) {
-            console.error('Error:', err);
-            console.error('ffmpeg stdout:', stdout);
-            console.error('ffmpeg stderr:', stderr);
-        })
-        .on('end', function (output) {
-            console.error('Video created in:', output);
-        })
+    for (const {html, posY, duration} of htmls) {
+        await page.setContent(html);
+        await page.evaluate((scrollY) => {
+            window.scrollBy(0, scrollY);
+        }, posY);
+        await sleep(duration * 1000);
+    }
+
+    await recorder.stop();
+    await browser.close();
 }
 
 const generateFiles = async (filePath) => {
@@ -108,13 +85,13 @@ const generateFiles = async (filePath) => {
     // writeFileSync("./html/index.html", html);
 
     const images = [];
+    const htmls = [];
     let index = 1;
     let codeToParse = [];
     let posX = 7;
     const scrollThreshold = (MAX_LINES / 2) + 1;
     for (const codeObj of codeLines) {
         const { code, action, line, duration = 1 } = codeObj;
-        const filePath = `${fileOutput}${index}.png`;
 
         if (action === ADD) {
             codeToParse.splice(line, 0, code);
@@ -130,23 +107,20 @@ const generateFiles = async (filePath) => {
         );
 
         // writeFileSync(`./html/index-${index}.html`, html);
-        console.log(`Creating image: ${filePath}`);
         const diff = line - scrollThreshold;
-        await createScreenshot(
-            html,
-            filePath,
-            Math.max((posX + (16 * diff)) * SCALE, 0)
-        );
 
-        console.log('Done!');
-        new Array(duration * divider).fill(null).forEach(() => {
-            images.push(filePath);
+        htmls.push({
+            html,
+            duration,
+            posY: Math.max((posX + (16 * diff)) * SCALE, 0),
         });
         index += 1;
     }
 
     console.log('Creating video...')
-    await createVideo(images);
+    await createVideo(
+        htmls
+    );
 }
 
 const filePath = process.argv[2] || 'Test.jsx';
