@@ -106,7 +106,7 @@ const generateFiles = async (filePath) => {
     const htmls = [];
     let index = 1;
     let codeToParse = [];
-    let posX = 7;
+    let basePosY = 7;
     const scrollThreshold = (MAX_LINES / 2) + 1;
     for (const codeObj of codeLines) {
         const { code, action, line, duration = 1 } = codeObj;
@@ -126,11 +126,12 @@ const generateFiles = async (filePath) => {
 
         // writeFileSync(`./html/index-${index}.html`, html);
         const diff = line - scrollThreshold;
+        const posY = Math.max((basePosY + (16 * diff)) * SCALE, 0);
 
         htmls.push({
             html,
             duration,
-            posY: Math.max((posX + (16 * diff)) * SCALE, 0),
+            posY,
         });
         index += 1;
     }
