@@ -81,6 +81,16 @@ const generateFiles = async (filePath) => {
     // const html = generateHtml(code, lines.length, lines.length);
     // writeFileSync("./html/index.html", html);
 
+    const languages = JSON.parse(
+        readFileSync('./languages.json', { encoding: 'utf8' })
+    );
+    const fileExtension = filePath.split('.').pop();
+    const language = (Object.entries(languages).find(([lang, extensions]) => {
+        return extensions.includes(fileExtension);
+    }) || ['javascript'])[0];
+
+    console.log(`language is: ${language}`);
+
     const images = [];
     let index = 0;
     let codeToParse = '';
@@ -91,7 +101,12 @@ const generateFiles = async (filePath) => {
         const filePath = `${fileOutput}${index}.png`;
 
         codeToParse = `${codeToParse}${line}\n`;
-        const html = generateHtml(codeToParse, index - 1, lines.length);
+        const html = generateHtml(
+            codeToParse,
+            index - 1,
+            lines.length,
+            language
+        );
         // writeFileSync(`./html/index-${index}.html`, html);
         console.log(`Creating image: ${filePath}`);
         await createScreenshot(
@@ -112,5 +127,5 @@ const generateFiles = async (filePath) => {
     await createVideo(images);
 }
 
-const filePath = process.argv[2] || 'Test.jsx';
+const filePath = process.argv[2] || './examples/Test.jsx';
 generateFiles(filePath);

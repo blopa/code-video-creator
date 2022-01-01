@@ -3,6 +3,8 @@ import React from 'react';
 import { renderToStaticMarkup } from "react-dom/server";
 import { JSDOM } from "jsdom";
 import { readFileSync } from "fs";
+import loadLanguages from "prismjs/components/";
+import Prism from "prismjs";
 
 import CodeHighlighter from './CodeHighlighter.jsx';
 
@@ -11,11 +13,13 @@ const styling = readFileSync(
     { encoding: 'utf8' }
 );
 
-export const generateHtml = (code, currentLine, totalLines) => {
+export const generateHtml = (code, currentLine, totalLines, language) => {
+    loadLanguages([language]);
+    const codeHtml = Prism.highlight(code, Prism.languages[language], language);
+
     const html = renderToStaticMarkup((
         <CodeHighlighter
-            code={code}
-            language="javascript"
+            codeHtml={codeHtml}
             totalLines={totalLines}
             currentLine={currentLine}
         />

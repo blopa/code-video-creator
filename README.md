@@ -1,10 +1,13 @@
-# Create a video of a javascript file
+# Create a video of a code file
 
-Create a video file showing line by line of a javascript file or React component.
+Create a video file showing line by line of a code file or React component.
 
 ![ScreenShot](https://raw.githubusercontent.com/blopa/code-video-creator/main/image.png)
 
 I have no idea why I made this... but there you go.
+
+## Languages
+Add your language and extensions to the file `languages.json` so they can be automatically detected by this script, as long as the language is supported by [Prism.js](https://prismjs.com/).
 
 ## How to use
 Run
