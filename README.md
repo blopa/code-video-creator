@@ -21,6 +21,6 @@ To install dependencies, then run
 npm run generate Test.jsx
 ```
 
-Where "Test2.jsx" should be the path to your file.
+Where "Test.jsx" should be the path to your file.
 
 PS: You need to have `ffmpeg` installed for this to work!
