@@ -76,31 +76,51 @@ const generateFiles = async (filePath) => {
     let lineOffset = 0;
     if (lines[0].trimLeft().startsWith(scriptStart) && lines[0].includes('has-script')) {
         console.log('has script');
-        lines.splice(0, 1);
+        // lines.splice(0, 1);
         hasScript = true;
         lineOffset += 1;
     }
 
     const codeLines = [];
-    for (let i = 0; i < lines.length; i++) {
-        let codeLine = lines[i];
+    let linesToSkip = 0;
+    for (let i = lineOffset; i < lines.length; i++) {
+        let mainLine = i - lineOffset;
+        let codeLine = lines[mainLine + lineOffset];
+        let cleanCode = codeLine.replace(/\t/g, '    ');
+        // console.log({ mainLine, codeLine, i, lineOffset });
+
+        if (linesToSkip > 0) {
+            codeLines.push({
+                code: cleanCode,
+                line: mainLine,
+                action: ADD,
+                duration: 0, // seconds
+                skip: true,
+            });
+            linesToSkip -= 1;
+            continue;
+        }
+
         if (codeLine?.length) {
             let mainAction = ADD;
-            let mainLine = i;
 
             if (hasScript && codeLine.trimLeft().startsWith(scriptStart)) {
                 const [, command] = codeLine.split(scriptStart);
                 const [action, line] = command.trim().split(',');
-                i += 1;
+
                 lineOffset += 1;
-                codeLine = lines[i];
+                codeLine = lines[mainLine + lineOffset];
+                cleanCode = codeLine.replace(/\t/g, '    ');
+                // console.log({codeLine});
                 mainLine = parseInt(line) - lineOffset;
                 const newAction = action.toUpperCase();
+                // console.log({newAction});
 
                 if ([REPLACE, SKIP_TO].includes(newAction)) {
                     mainAction = newAction;
 
                     if (mainAction === REPLACE) {
+                        i += 1;
                         codeLines.push({
                             code: '|',
                             line: mainLine,
@@ -117,36 +137,14 @@ const generateFiles = async (filePath) => {
                 }
             }
 
-            const cleanCode = codeLine.replace(/\t/g, '    ');
+            cleanCode = codeLine.replace(/\t/g, '    ');
             const whiteSpacesCount = cleanCode.length - cleanCode.trimLeft().length;
             let accCodeLine = ''.padStart(whiteSpacesCount, ' ');
             const trimmedCode = cleanCode.trimLeft();
 
+            // console.log({mainAction, mainLine, linesToSkip});
             if (mainAction === SKIP_TO) {
-                const originalLine = i;
-                i = mainLine - 1;
-
-                codeLines.push({
-                    code: null,
-                    line: mainLine,
-                    action: SKIP_TO,
-                    duration: 0.5, // seconds
-                });
-
-                let lOffset = 1;
-                i -= 1;
-                lines.slice(originalLine, mainLine).forEach((c, idx) => {
-                    if (!c.trimLeft().startsWith(scriptStart)) {
-                        codeLines.push({
-                            code: c,
-                            line: originalLine + idx - lOffset,
-                            action: ADD,
-                            duration: 0, // seconds
-                        });
-                    } else {
-                        lOffset += 1;
-                    }
-                });
+                linesToSkip = mainLine - 1;
             } else {
                 codeLines.push({
                     code: accCodeLine + '|',
@@ -178,7 +176,7 @@ const generateFiles = async (filePath) => {
         } else {
             codeLines.push({
                 code: codeLine,
-                line: i,
+                line: mainLine,
                 action: ADD,
                 duration: 0.5, // seconds
             });
@@ -205,13 +203,20 @@ const generateFiles = async (filePath) => {
     // console.log(codeLines);
     for (let i = 0; i < codeLines.length; i++) {
         const codeObj = codeLines[i];
-        const { code, action, line, duration = 1 } = codeObj;
+        const {
+            code,
+            action,
+            line,
+            duration = 1,
+            skip = false,
+        } = codeObj;
 
         if (action === ADD) {
             codeToParse.splice(line, 0, code);
         } else if (action === REMOVE) {
             codeToParse.splice(line, 1);
         } else if (action === REPLACE) {
+            // console.log({ codeToParse, line });
             const lineCode = codeToParse[line];
             const whiteSpacesCount = lineCode.length - lineCode.trimLeft().length;
             let accCodeLine = ''.padStart(whiteSpacesCount, ' ');
@@ -219,10 +224,10 @@ const generateFiles = async (filePath) => {
             codeToParse.splice(line, 1, accCodeLine + code.trimLeft());
         } else if (action === SELECT) {
             codeToParse.splice(line, 1, codeToParse[line] + code);
-        } else if (action === SKIP_TO) {
-            codeToParse = codeLines.filter((cObj) => cObj !== codeObj)
-                .slice(0, line).map((cObj) => cObj.code);
-            i = line;
+        }
+
+        if (skip) {
+            continue;
         }
 
         console.log(`generating HTML for line ${line}`);

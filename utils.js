@@ -17,6 +17,7 @@ export const generateHtml = (code, currentLine, totalLines, language) => {
     loadLanguages([language]);
     const codeHtml = Prism.highlight(code, Prism.languages[language], language);
 
+    // console.log({code});
     const html = renderToStaticMarkup((
         <CodeHighlighter
             codeHtml={codeHtml}
