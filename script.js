@@ -6,7 +6,7 @@ const { PuppeteerScreenRecorder } = require('puppeteer-screen-recorder');
 
 const { readFileSync, writeFileSync, mkdirSync, rmdirSync } = require('fs');
 
-const { WIDTH, HEIGHT, MAX_LINES, SCALE, ADD, REMOVE, REPLACE} = require("./constants");
+const { WIDTH, HEIGHT, MAX_LINES, SCALE, ADD, REMOVE, REPLACE, SELECT } = require("./constants");
 
 const createVideo = async (htmls) => {
     const browser = await puppeteer.launch({
@@ -71,24 +71,65 @@ const generateFiles = async (filePath) => {
     // const data = readFileSync(filePath, { encoding: 'utf8' });
     // const code = prettier.format(data, { parser: "babel" });
     const lines = code.split('\n');
+    const scriptStart = '//#';
+    let hasScript = false;
+    let lineOffset = 0;
+    if (lines[0].startsWith(scriptStart) && lines[0].includes('has-script')) {
+        console.log('has script');
+        lines.splice(0, 1);
+        hasScript = true;
+        lineOffset += 1;
+    }
+
     const codeLines = [];
-    lines.forEach((code, index) => {
-        if (code?.length) {
-            const cleanCode = code.replace(/\t/g, '    ');
+    for (let i = 0; i < lines.length; i++) {
+        let codeLine = lines[i];
+        if (codeLine?.length) {
+            let mainAction = ADD;
+            let mainLine = i;
+
+            if (hasScript && codeLine.startsWith(scriptStart)) {
+                const [, command] = codeLine.split(scriptStart);
+                const [action, line] = command.trim().split(',');
+
+                i += 1;
+                lineOffset += 1;
+                codeLine = lines[i];
+                mainLine = parseInt(line) - lineOffset;
+                mainAction = action.toUpperCase();
+
+                console.log(mainAction, REPLACE);
+                if (mainAction === REPLACE) {
+                    codeLines.push({
+                        code: '|',
+                        line: mainLine,
+                        action: SELECT,
+                        duration: 2, // seconds
+                    });
+                    codeLines.push({
+                        code: ' ',
+                        line: mainLine,
+                        action: SELECT,
+                        duration: 0.5, // seconds
+                    });
+                }
+            }
+
+            const cleanCode = codeLine.replace(/\t/g, '    ');
             const whiteSpacesCount = cleanCode.length - cleanCode.trimLeft().length;
             let accCodeLine = ''.padStart(whiteSpacesCount, ' ');
             const trimmedCode = cleanCode.trimLeft();
 
             codeLines.push({
                 code: accCodeLine + '|',
-                line: index,
-                action: ADD,
+                line: mainLine,
+                action: mainAction,
                 duration: 0.9, // seconds
             });
 
             codeLines.push({
                 code: accCodeLine + '|',
-                line: index,
+                line: mainLine,
                 action: REPLACE,
                 duration: 0.1, // seconds
             });
@@ -100,20 +141,20 @@ const generateFiles = async (filePath) => {
 
                     codeLines.push({
                         code: accCodeLine + ext,
-                        line: index,
+                        line: mainLine,
                         action: REPLACE,
                         duration:  getRandomBetween(250, 100) / 1000, // seconds
                     });
                 });
         } else {
             codeLines.push({
-                code,
-                line: index,
+                code1: codeLine,
+                line: i,
                 action: ADD,
                 duration: 0.5, // seconds
             });
         }
-    });
+    }
     // codeLines.push({
     //     code: null,
     //     line: 5,
@@ -162,6 +203,8 @@ const generateFiles = async (filePath) => {
             codeToParse.splice(line, 1);
         } else if (action === REPLACE) {
             codeToParse.splice(line, 1, code);
+        } else if (action === SELECT) {
+            codeToParse.splice(line, 1, codeToParse[line] + code);
         }
 
         console.log(`generating HTML for line ${line}`);

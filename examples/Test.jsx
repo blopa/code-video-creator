@@ -1,4 +1,5 @@
-import { useState } from 'react';
+//# has-script
+import { useState } from "react";
 
 function Test() {
     const [val, setVal] = useState(1);
@@ -18,3 +19,6 @@ function Test() {
 }
 
 export default Test;
+
+//# replace,5
+const [val, setVal] = useState(2);

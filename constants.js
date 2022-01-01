@@ -7,3 +7,4 @@ export const MAX_LINES = 16;
 export const ADD = 'ADD';
 export const REMOVE = 'REMOVE';
 export const REPLACE = 'REPLACE';
+export const SELECT = 'SELECT';
