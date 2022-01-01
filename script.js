@@ -138,6 +138,16 @@ const generateFiles = async (filePath) => {
     // const html = generateHtml(code, lines.length, lines.length);
     // writeFileSync("./html/index.html", html);
 
+    const languages = JSON.parse(
+        readFileSync('./languages.json', { encoding: 'utf8' })
+    );
+    const fileExtension = filePath.split('.').pop();
+    const language = (Object.entries(languages).find(([lang, extensions]) => {
+        return extensions.includes(fileExtension);
+    }) || ['javascript'])[0];
+
+    console.log(`language is: ${language}`);
+
     const htmls = [];
     let codeToParse = [];
     let basePosY = 7;
@@ -158,7 +168,8 @@ const generateFiles = async (filePath) => {
         const html = generateHtml(
             codeToParse.filter((s) => s !== null).join('\n'),
             line,
-            codeLines.length
+            codeLines.length,
+            language
         );
 
         writeFileSync(`./html/index-${line}.html`, html);
@@ -179,5 +190,5 @@ const generateFiles = async (filePath) => {
     );
 }
 
-const filePath = process.argv[2] || 'Test.jsx';
+const filePath = process.argv[2] || './examples/Test.jsx';
 generateFiles(filePath);

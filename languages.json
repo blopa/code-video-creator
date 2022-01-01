@@ -1,0 +1,5 @@
+{
+  "javascript": ["js", "jsx"],
+  "python": ["py"],
+  "php": ["php"]
+}

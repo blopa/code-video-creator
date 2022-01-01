@@ -1,14 +1,11 @@
 import React from 'react';
-import Prism from "prismjs";
 import { HEIGHT, WIDTH, SCALE } from "./constants";
 
 function CodeHighlighter({
-    code,
-    language,
+    codeHtml,
     totalLines,
     currentLine,
 }) {
-    const html = Prism.highlight(code, Prism.languages[language], language);
     const lines = new Array(totalLines).fill(null).map((v, index) => {
         return ((
             <span
@@ -76,7 +73,7 @@ function CodeHighlighter({
                                 fontFamily: "Consolas,Monaco,'Andale Mono','Ubuntu Mono',monospace",
                             }}
                             dangerouslySetInnerHTML={{
-                                __html: html,
+                                __html: codeHtml,
                             }}
                         />
                     </pre>
