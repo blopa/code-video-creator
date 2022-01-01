@@ -8,3 +8,4 @@ export const ADD = 'ADD';
 export const REMOVE = 'REMOVE';
 export const REPLACE = 'REPLACE';
 export const SELECT = 'SELECT';
+export const SKIP_TO = 'SKIP_TO';

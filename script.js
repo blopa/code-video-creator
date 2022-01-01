@@ -6,7 +6,7 @@ const { PuppeteerScreenRecorder } = require('puppeteer-screen-recorder');
 
 const { readFileSync, writeFileSync, mkdirSync, rmdirSync } = require('fs');
 
-const { WIDTH, HEIGHT, MAX_LINES, SCALE, ADD, REMOVE, REPLACE, SELECT } = require("./constants");
+const { WIDTH, HEIGHT, MAX_LINES, SCALE, ADD, REMOVE, REPLACE, SELECT, SKIP_TO } = require("./constants");
 
 const createVideo = async (htmls) => {
     const browser = await puppeteer.launch({
@@ -33,7 +33,7 @@ const createVideo = async (htmls) => {
     const recorder = new PuppeteerScreenRecorder(page, config);
     await recorder.start('./output.mp4');
     await page.waitForTimeout(1000);
-    console.log('start recodring...');
+    console.log('start recording...');
 
     let prevPosY = null;
     for (const { html, posY, duration, line } of htmls) {
@@ -60,7 +60,7 @@ const createVideo = async (htmls) => {
         prevPosY = posY;
     }
 
-    console.log('stop recodring');
+    console.log('stop recording');
     await recorder.stop();
     console.log('close browser');
     await browser.close();
@@ -74,7 +74,7 @@ const generateFiles = async (filePath) => {
     const scriptStart = '//#';
     let hasScript = false;
     let lineOffset = 0;
-    if (lines[0].startsWith(scriptStart) && lines[0].includes('has-script')) {
+    if (lines[0].trimLeft().startsWith(scriptStart) && lines[0].includes('has-script')) {
         console.log('has script');
         lines.splice(0, 1);
         hasScript = true;
@@ -88,30 +88,32 @@ const generateFiles = async (filePath) => {
             let mainAction = ADD;
             let mainLine = i;
 
-            if (hasScript && codeLine.startsWith(scriptStart)) {
+            if (hasScript && codeLine.trimLeft().startsWith(scriptStart)) {
                 const [, command] = codeLine.split(scriptStart);
                 const [action, line] = command.trim().split(',');
-
                 i += 1;
                 lineOffset += 1;
                 codeLine = lines[i];
                 mainLine = parseInt(line) - lineOffset;
-                mainAction = action.toUpperCase();
+                const newAction = action.toUpperCase();
 
-                console.log(mainAction, REPLACE);
-                if (mainAction === REPLACE) {
-                    codeLines.push({
-                        code: '|',
-                        line: mainLine,
-                        action: SELECT,
-                        duration: 2, // seconds
-                    });
-                    codeLines.push({
-                        code: ' ',
-                        line: mainLine,
-                        action: SELECT,
-                        duration: 0.5, // seconds
-                    });
+                if ([REPLACE, SKIP_TO].includes(newAction)) {
+                    mainAction = newAction;
+
+                    if (mainAction === REPLACE) {
+                        codeLines.push({
+                            code: '|',
+                            line: mainLine,
+                            action: SELECT,
+                            duration: 2, // seconds
+                        });
+                        codeLines.push({
+                            code: ' ',
+                            line: mainLine,
+                            action: SELECT,
+                            duration: 0.5, // seconds
+                        });
+                    }
                 }
             }
 
@@ -120,61 +122,68 @@ const generateFiles = async (filePath) => {
             let accCodeLine = ''.padStart(whiteSpacesCount, ' ');
             const trimmedCode = cleanCode.trimLeft();
 
-            codeLines.push({
-                code: accCodeLine + '|',
-                line: mainLine,
-                action: mainAction,
-                duration: 0.9, // seconds
-            });
+            if (mainAction === SKIP_TO) {
+                const originalLine = i;
+                i = mainLine - 1;
 
-            codeLines.push({
-                code: accCodeLine + '|',
-                line: mainLine,
-                action: REPLACE,
-                duration: 0.1, // seconds
-            });
-
-            trimmedCode.split('')
-                .forEach((letter, idx) => {
-                    accCodeLine += letter;
-                    const ext = idx + 1 === trimmedCode.length ? '' : '|';
-
-                    codeLines.push({
-                        code: accCodeLine + ext,
-                        line: mainLine,
-                        action: REPLACE,
-                        duration:  getRandomBetween(250, 100) / 1000, // seconds
-                    });
+                codeLines.push({
+                    code: null,
+                    line: mainLine,
+                    action: SKIP_TO,
+                    duration: 0.5, // seconds
                 });
+
+                let lOffset = 1;
+                i -= 1;
+                lines.slice(originalLine, mainLine).forEach((c, idx) => {
+                    if (!c.trimLeft().startsWith(scriptStart)) {
+                        codeLines.push({
+                            code: c,
+                            line: originalLine + idx - lOffset,
+                            action: ADD,
+                            duration: 0, // seconds
+                        });
+                    } else {
+                        lOffset += 1;
+                    }
+                });
+            } else {
+                codeLines.push({
+                    code: accCodeLine + '|',
+                    line: mainLine,
+                    action: mainAction,
+                    duration: 0.9, // seconds
+                });
+
+                codeLines.push({
+                    code: accCodeLine + '|',
+                    line: mainLine,
+                    action: REPLACE,
+                    duration: 0.1, // seconds
+                });
+
+                trimmedCode.split('')
+                    .forEach((letter, idx) => {
+                        accCodeLine += letter;
+                        const ext = idx + 1 === trimmedCode.length ? '' : '|';
+
+                        codeLines.push({
+                            code: accCodeLine + ext,
+                            line: mainLine,
+                            action: REPLACE,
+                            duration:  getRandomBetween(250, 100) / 1000, // seconds
+                        });
+                    });
+            }
         } else {
             codeLines.push({
-                code1: codeLine,
+                code: codeLine,
                 line: i,
                 action: ADD,
                 duration: 0.5, // seconds
             });
         }
     }
-    // codeLines.push({
-    //     code: null,
-    //     line: 5,
-    //     action: ADD,
-    // });
-    // codeLines.push({
-    //     code: null,
-    //     line: 5,
-    //     action: ADD,
-    // });
-    // codeLines.push({
-    //     code: '    console.log("Hello World");',
-    //     line: 5,
-    //     action: ADD,
-    // });
-    // codeLines.push({
-    //     code: '    console.log("Hello World");',
-    //     line: 4,
-    //     action: REPLACE,
-    // });
 
     // const html = generateHtml(code, lines.length, lines.length);
     // writeFileSync("./html/index.html", html);
@@ -194,7 +203,8 @@ const generateFiles = async (filePath) => {
     let basePosY = 7;
     const scrollThreshold = (MAX_LINES / 2) + 1;
     // console.log(codeLines);
-    for (const codeObj of codeLines) {
+    for (let i = 0; i < codeLines.length; i++) {
+        const codeObj = codeLines[i];
         const { code, action, line, duration = 1 } = codeObj;
 
         if (action === ADD) {
@@ -202,9 +212,17 @@ const generateFiles = async (filePath) => {
         } else if (action === REMOVE) {
             codeToParse.splice(line, 1);
         } else if (action === REPLACE) {
-            codeToParse.splice(line, 1, code);
+            const lineCode = codeToParse[line];
+            const whiteSpacesCount = lineCode.length - lineCode.trimLeft().length;
+            let accCodeLine = ''.padStart(whiteSpacesCount, ' ');
+
+            codeToParse.splice(line, 1, accCodeLine + code.trimLeft());
         } else if (action === SELECT) {
             codeToParse.splice(line, 1, codeToParse[line] + code);
+        } else if (action === SKIP_TO) {
+            codeToParse = codeLines.filter((cObj) => cObj !== codeObj)
+                .slice(0, line).map((cObj) => cObj.code);
+            i = line;
         }
 
         console.log(`generating HTML for line ${line}`);
