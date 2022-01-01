@@ -33,6 +33,7 @@ const createVideo = async (htmls) => {
     };
     const recorder = new PuppeteerScreenRecorder(page, config);
     await recorder.start('./output.mp4');
+    await page.waitForTimeout(1000);
 
     let prevPosY = null;
     for (const { html, posY, duration } of htmls) {
@@ -43,12 +44,14 @@ const createVideo = async (htmls) => {
         await page.setContent(html);
 
         if (posY) {
-            await page.evaluate((scrollY) => {
+            await page.evaluate((posY) => {
                 // 180ms per 1000px
                 window.scrollTo({
-                    top: scrollY,
+                    top: posY,
                     behavior: 'smooth',
                 });
+
+                // document.getElementsByTagName('html')[0].innerHTML = html;
             }, posY);
         }
 
