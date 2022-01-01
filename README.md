@@ -15,7 +15,7 @@ npm install
 To install dependencies, then run
 
 ```shell
-npm run generate Test2.jsx
+npm run generate Test.jsx
 ```
 
 Where "Test2.jsx" should be the path to your file.

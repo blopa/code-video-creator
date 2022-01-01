@@ -6,7 +6,7 @@ const videoshow = require('videoshow');
 
 const { readFileSync, writeFileSync, mkdirSync, rmdirSync } = require('fs');
 
-const { WIDTH, HEIGHT, MAX_LINES, SCALE } = require("./sizes");
+const { WIDTH, HEIGHT, MAX_LINES, SCALE } = require("./constants");
 
 const createScreenshot = async (html, filePath, posY) => {
     const browser = await puppeteer.launch({
@@ -19,7 +19,7 @@ const createScreenshot = async (html, filePath, posY) => {
     });
 
     const page = await browser.newPage();
-    page.setContent(html);
+    await page.setContent(html);
     await page.evaluate((scrollY) => {
         window.scrollBy(0, scrollY);
     }, posY);
@@ -53,7 +53,7 @@ const createVideo = (images) => {
     };
 
     return videoshow(images, videoOptions)
-        .save('./video.mp4')
+        .save('./output.mp4')
         .on('start', function (command) {
             console.log('ffmpeg process started:', command);
         })
@@ -91,7 +91,7 @@ const generateFiles = async (filePath) => {
         const filePath = `${fileOutput}${index}.png`;
 
         codeToParse = `${codeToParse}${line}\n`;
-        const html = generateHtml(codeToParse, index, lines.length);
+        const html = generateHtml(codeToParse, index - 1, lines.length);
         // writeFileSync(`./html/index-${index}.html`, html);
         console.log(`Creating image: ${filePath}`);
         await createScreenshot(

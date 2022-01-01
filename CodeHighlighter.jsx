@@ -1,11 +1,12 @@
 import React from 'react';
 import Prism from "prismjs";
-import { HEIGHT, WIDTH, SCALE } from "./sizes";
+import { HEIGHT, WIDTH, SCALE } from "./constants";
 
 function CodeHighlighter({
     code,
     language,
     totalLines,
+    currentLine,
 }) {
     const html = Prism.highlight(code, Prism.languages[language], language);
     const lines = new Array(totalLines).fill(null).map((v, index) => {
@@ -41,11 +42,21 @@ function CodeHighlighter({
             >
                 <div
                     style={{
-                        background: '#272822',
+                        // background: '#272822',
                         display: 'flex',
                         margin: '20px 0 0 2px',
                     }}
                 >
+                    <div
+                        style={{
+                            width: '100%',
+                            position: 'absolute',
+                            height: `${4 * SCALE}px`,
+                            backgroundColor: '#44463a',
+                            zIndex: -1,
+                            marginTop: `${currentLine * 16}px`,
+                        }}
+                    />
                     <div
                         style={{
                             display: 'grid',
