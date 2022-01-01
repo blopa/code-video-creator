@@ -104,7 +104,6 @@ const generateFiles = async (filePath) => {
     // writeFileSync("./html/index.html", html);
 
     const htmls = [];
-    let index = 1;
     let codeToParse = [];
     let basePosY = 7;
     const scrollThreshold = (MAX_LINES / 2) + 1;
@@ -121,10 +120,11 @@ const generateFiles = async (filePath) => {
 
         const html = generateHtml(
             codeToParse.filter((s) => s !== null).join('\n'),
+            line,
             codeLines.length
         );
 
-        // writeFileSync(`./html/index-${index}.html`, html);
+        writeFileSync(`./html/index-${line}.html`, html);
         const diff = line - scrollThreshold;
         const posY = Math.max((basePosY + (16 * diff)) * SCALE, 0);
 
@@ -133,7 +133,6 @@ const generateFiles = async (filePath) => {
             duration,
             posY,
         });
-        index += 1;
     }
 
     console.log('Creating video...')
