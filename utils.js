@@ -34,3 +34,7 @@ export const generateHtml = (code, currentLine, totalLines, language) => {
 
     return document.getElementsByTagName('html')[0].outerHTML;
 }
+
+export const getRandomBetween = (max, min) => {
+    return Math.floor(Math.random() * (max - min + 1)) + min;
+}
