@@ -1,9 +1,8 @@
 require('@babel/register');
-const { generateHtml } = require('./utils');
+const { generateHtml, getRandomBetween } = require('./utils');
 const puppeteer = require('puppeteer');
 // const prettier = require('prettier');
 const { PuppeteerScreenRecorder } = require('puppeteer-screen-recorder');
-
 
 const { readFileSync, writeFileSync, mkdirSync, rmdirSync } = require('fs');
 
@@ -34,16 +33,18 @@ const createVideo = async (htmls) => {
     const recorder = new PuppeteerScreenRecorder(page, config);
     await recorder.start('./output.mp4');
     await page.waitForTimeout(1000);
+    console.log('start recodring...');
 
     let prevPosY = null;
-    for (const { html, posY, duration } of htmls) {
-        if (prevPosY) {
+    for (const { html, posY, duration, line } of htmls) {
+        console.log(`rendering line ${line}`);
+        if (prevPosY !== posY) {
             await page.waitForTimeout(0.18 * Math.abs(posY - prevPosY));
         }
 
         await page.setContent(html);
 
-        if (posY) {
+        if (prevPosY !== posY) {
             await page.evaluate((posY) => {
                 // 180ms per 1000px
                 window.scrollTo({
@@ -59,28 +60,59 @@ const createVideo = async (htmls) => {
         prevPosY = posY;
     }
 
+    console.log('stop recodring');
     await recorder.stop();
+    console.log('close browser');
     await browser.close();
 }
 
 const generateFiles = async (filePath) => {
-    const fileOutput = `./frames/`;
-    mkdirSync(fileOutput, { recursive: true });
-    rmdirSync(fileOutput, { recursive: true });
-    mkdirSync(fileOutput, { recursive: true });
-
     const code = readFileSync(filePath, { encoding: 'utf8' });
     // const data = readFileSync(filePath, { encoding: 'utf8' });
     // const code = prettier.format(data, { parser: "babel" });
     const lines = code.split('\n');
-    const codeLines = lines.map((code, index) => {
-        // TODO
-        return {
-            code,
-            line: index,
-            action: ADD,
-            duration: 2, // seconds
-        };
+    const codeLines = [];
+    lines.forEach((code, index) => {
+        if (code?.length) {
+            const cleanCode = code.replace(/\t/g, '    ');
+            const whiteSpacesCount = cleanCode.length - cleanCode.trimLeft().length;
+            let accCodeLine = ''.padStart(whiteSpacesCount, ' ');
+            const trimmedCode = cleanCode.trimLeft();
+
+            codeLines.push({
+                code: accCodeLine + '|',
+                line: index,
+                action: ADD,
+                duration: 0.9, // seconds
+            });
+
+            codeLines.push({
+                code: accCodeLine + '|',
+                line: index,
+                action: REPLACE,
+                duration: 0.1, // seconds
+            });
+
+            trimmedCode.split('')
+                .forEach((letter, idx) => {
+                    accCodeLine += letter;
+                    const ext = idx + 1 === trimmedCode.length ? '' : '|';
+
+                    codeLines.push({
+                        code: accCodeLine + ext,
+                        line: index,
+                        action: REPLACE,
+                        duration:  getRandomBetween(250, 100) / 1000, // seconds
+                    });
+                });
+        } else {
+            codeLines.push({
+                code,
+                line: index,
+                action: ADD,
+                duration: 0.5, // seconds
+            });
+        }
     });
     // codeLines.push({
     //     code: null,
@@ -110,17 +142,19 @@ const generateFiles = async (filePath) => {
     let codeToParse = [];
     let basePosY = 7;
     const scrollThreshold = (MAX_LINES / 2) + 1;
+    // console.log(codeLines);
     for (const codeObj of codeLines) {
         const { code, action, line, duration = 1 } = codeObj;
 
         if (action === ADD) {
             codeToParse.splice(line, 0, code);
         } else if (action === REMOVE) {
-            codeToParse.splice(line - 1, 1);
+            codeToParse.splice(line, 1);
         } else if (action === REPLACE) {
-            codeToParse.splice(line - 1, 1, code);
+            codeToParse.splice(line, 1, code);
         }
 
+        console.log(`generating HTML for line ${line}`);
         const html = generateHtml(
             codeToParse.filter((s) => s !== null).join('\n'),
             line,
@@ -132,13 +166,14 @@ const generateFiles = async (filePath) => {
         const posY = Math.max((basePosY + (16 * diff)) * SCALE, 0);
 
         htmls.push({
-            html,
             duration,
+            html,
             posY,
+            line,
         });
     }
 
-    console.log('Creating video...')
+    console.log('creating video...')
     await createVideo(
         htmls
     );

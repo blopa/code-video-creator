@@ -31,5 +31,6 @@ export const generateHtml = (code, currentLine, totalLines) => {
     return document.getElementsByTagName('html')[0].outerHTML;
 }
 
-// https://stackoverflow.com/a/64762041/4307769
-export const sleep = t => new Promise(s => setTimeout(s, t));
+export const getRandomBetween = (max, min) => {
+    return Math.floor(Math.random() * (max - min + 1)) + min;
+}
