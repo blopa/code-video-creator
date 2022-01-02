@@ -1,82 +1,283 @@
 require('@babel/register');
-const { generateHtml } = require('./utils');
+
 const puppeteer = require('puppeteer');
 // const prettier = require('prettier');
-const videoshow = require('videoshow');
+const { PuppeteerScreenRecorder } = require('puppeteer-screen-recorder');
+const {
+    readFileSync,
+    // writeFileSync,
+    // mkdirSync,
+    // rmdirSync,
+} = require('fs');
+const { generateHtml, getRandomBetween } = require('./utils');
 
-const { readFileSync, writeFileSync, mkdirSync, rmdirSync } = require('fs');
+const {
+    ADD,
+    WIDTH,
+    SCALE,
+    HEIGHT,
+    REMOVE,
+    SELECT,
+    SKIP_TO,
+    REPLACE,
+    MAX_LINES,
+} = require('./constants');
 
-const { WIDTH, HEIGHT, MAX_LINES, SCALE } = require("./constants");
-
-const createScreenshot = async (html, filePath, posY) => {
+const createVideo = async (htmls) => {
     const browser = await puppeteer.launch({
         headless: true,
         args: [`--window-size=${WIDTH},${HEIGHT}`],
         defaultViewport: {
             width: WIDTH,
             height: HEIGHT,
-        }
+        },
     });
 
     const page = await browser.newPage();
-    await page.setContent(html);
-    await page.evaluate((scrollY) => {
-        window.scrollBy(0, scrollY);
-    }, posY);
 
-    await page.screenshot({
-        path: filePath,
-        // omitBackground: true,
-        // clip: {
-        //     y: posY,
-        //     x: 0,
-        //     width: WIDTH,
-        //     height: HEIGHT
-        // }
-    });
-
-    await browser.close();
-}
-
-const createVideo = (images) => {
-    const videoOptions = {
+    const config = {
+        followNewTab: false,
         fps: 25,
-        loop: 2, // seconds
-        transition: false,
-        videoBitrate: 1024,
-        videoCodec: 'libx264',
-        size: '1920x?',
-        audioBitrate: '128k',
-        audioChannels: 2,
-        format: 'mp4',
-        pixelFormat: 'yuv420p'
+        ffmpeg_Path: null,
+        videoFrame: {
+            width: WIDTH,
+            height: HEIGHT,
+        },
+        aspectRatio: '16:9',
     };
 
-    return videoshow(images, videoOptions)
-        .save('./output.mp4')
-        .on('start', function (command) {
-            console.log('ffmpeg process started:', command);
-        })
-        .on('error', function (err, stdout, stderr) {
-            console.error('Error:', err);
-            console.error('ffmpeg stdout:', stdout);
-            console.error('ffmpeg stderr:', stderr);
-        })
-        .on('end', function (output) {
-            console.error('Video created in:', output);
-        })
-}
+    const recorder = new PuppeteerScreenRecorder(page, config);
+    await recorder.start('./output.mp4');
+    await page.waitForTimeout(1000);
+    console.log('start recording...');
 
-const generateFiles = async (filePath) => {
-    const fileOutput = `./frames/`;
-    mkdirSync(fileOutput, { recursive: true });
-    rmdirSync(fileOutput, { recursive: true });
-    mkdirSync(fileOutput, { recursive: true });
+    let prevPosY = null;
+    for (const { html, posY, duration, line } of htmls) {
+        console.log(`rendering line ${line}`);
+        if (prevPosY !== posY) {
+            await page.waitForTimeout(0.18 * Math.abs(posY - prevPosY));
+        }
 
-    const code = readFileSync(filePath, { encoding: 'utf8' });
+        await page.setContent(html);
+
+        if (prevPosY !== posY) {
+            await page.evaluate((posY) => {
+                // 180ms per 1000px
+                window.scrollTo({
+                    top: posY,
+                    behavior: 'smooth',
+                });
+
+                // document.getElementsByTagName('html')[0].innerHTML = html;
+            }, posY);
+        }
+
+        await page.waitForTimeout(duration * 1000);
+        prevPosY = posY;
+    }
+
+    console.log('stop recording');
+    await recorder.stop();
+    console.log('close browser');
+    await browser.close();
+};
+
+const generateFiles = async (
+    filePath,
+    smallTabs = false,
+    typingSpeed = 1
+) => {
+    const sourceCode = readFileSync(filePath, { encoding: 'utf8' });
+
     // const data = readFileSync(filePath, { encoding: 'utf8' });
     // const code = prettier.format(data, { parser: "babel" });
-    const lines = code.split('\n');
+
+    const lines = sourceCode.split('\n').map((codeLine) =>
+        // replace all tabs by 4 whitespaces
+        codeLine.replace(/\t/g, '    ')).map((codeLine) => {
+        if (smallTabs) {
+            return codeLine.replaceAll('    ', '  ');
+        }
+
+        return codeLine;
+    });
+
+    const scriptStart = '//#';
+    let hasScript = false;
+    let lineOffset = 0;
+    if (
+        lines[0].trimStart().startsWith(scriptStart)
+        && lines[0].includes('has-script')
+    ) {
+        console.log('has script');
+        // lines.splice(0, 1);
+        hasScript = true;
+        lineOffset += 1;
+    }
+
+    const codeLines = [];
+    let lineCount = 0;
+    let linesToSkip = 0;
+    for (let i = 0; (i + lineOffset) < lines.length; i++) {
+        let mainAction = ADD;
+        let codeLine = lines[i + lineOffset];
+        // console.log({lineCount, i, lineOffset, len: lines.length, codeLine});
+        let lineNumber = lineCount;
+
+        if (linesToSkip > 0) {
+            codeLines.push({
+                code: codeLine,
+                line: lineNumber,
+                action: ADD,
+                duration: 0, // seconds
+                skip: true,
+            });
+            linesToSkip -= 1;
+            lineCount += 1;
+
+            continue;
+        }
+
+        if (codeLine?.trim()?.length) {
+            if (hasScript && codeLine.trimStart().startsWith(scriptStart)) {
+                const [, command] = codeLine.split(scriptStart);
+                const [
+                    action,
+                    line,
+                    // lineQty = '1',
+                    paste = 'false',
+                ] = command.trim().split(',');
+                const newAction = action.toUpperCase();
+
+                if ([REPLACE, SKIP_TO].includes(newAction)) {
+                    mainAction = newAction;
+
+                    if (mainAction === REPLACE) {
+                        lineOffset += 1;
+                        codeLine = lines[i + lineOffset];
+                        lineNumber = Number.parseInt(line, 10) - lineOffset - 1;
+
+                        if (paste === 'false') {
+                            codeLines.push({
+                                code: '|',
+                                line: lineNumber,
+                                action: SELECT,
+                                duration: 2, // seconds
+                            });
+                            codeLines.push({
+                                code: ' ',
+                                line: lineNumber,
+                                action: SELECT,
+                                duration: 0.5, // seconds
+                            });
+                        } else {
+                            codeLines.push({
+                                code: '|',
+                                line: lineNumber,
+                                action: SELECT,
+                                duration: 1, // seconds
+                            });
+
+                            const codeToReplace = lines[lineNumber + lineOffset];
+                            // console.log({codeToReplace});
+                            const whiteSpacesCount = codeToReplace.length - codeToReplace.trimStart().length;
+                            const accCodeLine = ''.padStart(whiteSpacesCount, ' ');
+                            const trimmedCode = codeToReplace.trimStart();
+                            const codeArr = [...trimmedCode];
+
+                            [...codeArr].forEach(() => {
+                                codeArr.pop();
+                                codeLines.push({
+                                    code: `${accCodeLine + codeArr.join('')}|`,
+                                    line: lineNumber,
+                                    action: REPLACE,
+                                    duration: 0.01, // seconds
+                                });
+                            });
+
+                            codeLines.push({
+                                code: ' ',
+                                line: lineNumber,
+                                action: SELECT,
+                                duration: 1, // seconds
+                            });
+
+                            codeLines.push({
+                                code: codeLine,
+                                line: lineNumber,
+                                action: REPLACE,
+                                duration: 1, // seconds
+                            });
+
+                            continue;
+                        }
+                    } else if (mainAction === SKIP_TO) {
+                        /*
+                         * -2 because 1 to counter-down array starting with 0,
+                         * and 1 to get the line before and show the chosen line animation
+                         */
+                        lineNumber = Number.parseInt(line, 10) - lineOffset - 2;
+                    }
+                }
+            }
+
+            const whiteSpacesCount = codeLine.length - codeLine.trimStart().length;
+            let accCodeLine = ''.padStart(whiteSpacesCount, ' ');
+            const trimmedCode = codeLine.trimStart();
+
+            if (mainAction === SKIP_TO) {
+                linesToSkip = lineNumber;
+            } else {
+                codeLines.push({
+                    code: `${accCodeLine}|`,
+                    line: lineNumber,
+                    action: mainAction,
+                    duration: 0.9, // seconds
+                });
+
+                codeLines.push({
+                    code: `${accCodeLine}|`,
+                    line: lineNumber,
+                    action: REPLACE,
+                    duration: 0.1, // seconds
+                });
+
+                [...trimmedCode].forEach((letter, idx) => {
+                    accCodeLine += letter;
+                    const ext = idx + 1 === trimmedCode.length ? '' : '|';
+
+                    codeLines.push({
+                        code: accCodeLine + ext,
+                        line: lineNumber,
+                        action: REPLACE,
+                        duration: getRandomBetween(250, 100) / 1000 * typingSpeed, // seconds
+                    });
+                });
+
+                if (![REPLACE].includes(mainAction)) {
+                    lineCount += 1;
+                }
+            }
+        } else {
+            // line breaks here
+            codeLines.push({
+                code: `${codeLine}|`,
+                line: lineNumber,
+                action: ADD,
+                duration: 0.5, // seconds
+            });
+            codeLines.push({
+                code: codeLine,
+                line: lineNumber,
+                action: REPLACE,
+                duration: 0.1, // seconds
+            });
+
+            if (![REPLACE].includes(mainAction)) {
+                lineCount += 1;
+            }
+        }
+    }
 
     // const html = generateHtml(code, lines.length, lines.length);
     // writeFileSync("./html/index.html", html);
@@ -85,47 +286,102 @@ const generateFiles = async (filePath) => {
         readFileSync('./languages.json', { encoding: 'utf8' })
     );
     const fileExtension = filePath.split('.').pop();
-    const language = (Object.entries(languages).find(([lang, extensions]) => {
-        return extensions.includes(fileExtension);
-    }) || ['javascript'])[0];
+    const language = (
+        Object.entries(languages)
+            .find(
+                ([lang, extensions]) => extensions.includes(fileExtension)
+            ) || ['javascript']
+    )[0];
 
     console.log(`language is: ${language}`);
 
-    const images = [];
-    let index = 0;
-    let codeToParse = '';
-    let posX = 21;
-    const lineToStartScrolling = (MAX_LINES / 2) + 1;
-    for (const line of lines) {
-        index += 1;
-        const filePath = `${fileOutput}${index}.png`;
+    const htmls = [];
+    const codeToParse = [];
+    const basePosY = 7;
+    const scrollThreshold = (MAX_LINES / 2) + 1;
+    // console.log(codeLines);
+    // const map = {};
+    // console.log(codeLines.filter((obj) => {
+    //     if (map[obj.line] === undefined) {
+    //         map[obj.line] = true;
+    //         return true;
+    //     }
+    //
+    //     return false;
+    // }));
 
-        codeToParse = `${codeToParse}${line}\n`;
-        const html = generateHtml(
-            codeToParse,
-            index - 1,
-            lines.length,
-            language
-        );
-        // writeFileSync(`./html/index-${index}.html`, html);
-        console.log(`Creating image: ${filePath}`);
-        await createScreenshot(
-            html,
-            filePath,
-            index > lineToStartScrolling ? (posX * SCALE) : 0
-        );
+    for (const codeObj of codeLines) {
+        const {
+            code,
+            action,
+            line,
+            duration = 1,
+            skip = false,
+        } = codeObj;
 
-        if (index > lineToStartScrolling) {
-            posX += 16;
+         // console.log({codeObj, i})
+         // console.log({ codeToParse, line });
+
+        switch (action) {
+            case ADD: {
+                codeToParse.splice(line, 0, code);
+
+                break;
+            }
+
+            case REMOVE: {
+                codeToParse.splice(line, 1);
+
+                break;
+            }
+
+            case REPLACE: {
+                const lineCode = codeToParse[line];
+                // if (!lineCode) console.log({ codeToParse, codeObj });
+                const whiteSpacesCount = lineCode.length - lineCode.trimStart().length;
+                const accCodeLine = ''.padStart(whiteSpacesCount, ' ');
+
+                codeToParse.splice(line, 1, accCodeLine + code.trimStart());
+
+                break;
+            }
+
+            case SELECT: {
+                codeToParse.splice(line, 1, codeToParse[line] + code);
+
+                break;
+            }
         }
 
-        console.log('Done!');
-        images.push(filePath);
+        if (skip) {
+            continue;
+        }
+
+        console.log(`generating HTML for line ${line + 1}`);
+        const html = generateHtml(
+            codeToParse.filter((s) => s !== null).join('\n'),
+            line,
+            lines.length + scrollThreshold,
+            language
+        );
+
+        // writeFileSync(`./html/index-${line}.html`, html);
+        const diff = line - scrollThreshold;
+        const posY = Math.max((basePosY + (16 * diff)) * SCALE, 0);
+
+        htmls.push({
+            duration,
+            html,
+            posY,
+            line,
+        });
     }
 
-    console.log('Creating video...')
-    await createVideo(images);
-}
+    console.log('creating video...');
+    await createVideo(
+        htmls
+    );
+};
 
 const filePath = process.argv[2] || './examples/Test.jsx';
-generateFiles(filePath);
+generateFiles(filePath, true, 0.3);

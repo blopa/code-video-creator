@@ -2,7 +2,9 @@
 
 Create a video file showing line by line of a code file or React component.
 
-![ScreenShot](https://raw.githubusercontent.com/blopa/code-video-creator/main/image.png)
+<img src="/examples/sample.gif?raw=true" width="890px" />
+
+![ScreenShot](https://raw.githubusercontent.com/blopa/code-video-creator/main/examples/image.png)
 
 I have no idea why I made this... but there you go.
 
@@ -18,9 +20,9 @@ npm install
 To install dependencies, then run
 
 ```shell
-npm run generate Test.jsx
+npm run generate test.js
 ```
 
-Where "Test.jsx" should be the path to your file.
+Where "test.js" should be the path to your file.
 
 PS: You need to have `ffmpeg` installed for this to work!
