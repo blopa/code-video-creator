@@ -25,4 +25,7 @@ npm run generate test.js
 
 Where "test.js" should be the path to your file.
 
-PS: You need to have `ffmpeg` installed for this to work!
+## Disclaimer
+This is 100% NOT production ready and the code is not optimized at all. Maybe I will make it better in the future
+
+You need to have `ffmpeg` installed for this to work!
