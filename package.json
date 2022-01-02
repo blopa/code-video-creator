@@ -25,7 +25,7 @@
     "styled-components": "^5.3.3"
   },
   "scripts": {
-    "generate": "node -r esm script.js",
+    "generate": "node -r esm src/script.js",
     "bump": "ncu -u -t minor"
   },
   "browserslist": {
