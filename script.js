@@ -10,7 +10,7 @@ const { WIDTH, HEIGHT, MAX_LINES, SCALE, ADD, REMOVE, REPLACE, SELECT, SKIP_TO }
 
 const createVideo = async (htmls) => {
     const browser = await puppeteer.launch({
-        headless: false,
+        headless: true,
         args: [`--window-size=${WIDTH},${HEIGHT}`],
         defaultViewport: {
             width: WIDTH,
@@ -66,11 +66,21 @@ const createVideo = async (htmls) => {
     await browser.close();
 }
 
-const generateFiles = async (filePath) => {
+const generateFiles = async (filePath, smallTabs = false) => {
     const code = readFileSync(filePath, { encoding: 'utf8' });
     // const data = readFileSync(filePath, { encoding: 'utf8' });
     // const code = prettier.format(data, { parser: "babel" });
-    const lines = code.split('\n');
+    const lines = code.split('\n').map((codeLine) => {
+        // replace all tabs by 4 whitespaces
+        return codeLine.replace(/\t/g, '    ');
+    }).map((codeLine) => {
+        if (smallTabs) {
+            return codeLine.replaceAll('    ', '  ');
+        }
+
+        return codeLine;
+    });
+
     const scriptStart = '//#';
     let hasScript = false;
     let lineOffset = 0;
@@ -88,13 +98,11 @@ const generateFiles = async (filePath) => {
         let mainAction = ADD;
         let codeLine = lines[i + lineOffset];
         // console.log({lineCount, i, lineOffset, len: lines.length, codeLine});
-        let cleanCode = codeLine.replace(/\t/g, '    ');
         let lineNumber = lineCount;
 
         if (linesToSkip > 0) {
-            console.log('to aqui!!!', {linesToSkip});
             codeLines.push({
-                code: cleanCode,
+                code: codeLine,
                 line: lineNumber,
                 action: ADD,
                 duration: 0, // seconds
@@ -106,7 +114,7 @@ const generateFiles = async (filePath) => {
             continue;
         }
 
-        if (cleanCode?.trim()?.length) {
+        if (codeLine?.trim()?.length) {
             if (hasScript && codeLine.trimLeft().startsWith(scriptStart)) {
                 const [, command] = codeLine.split(scriptStart);
                 const [
@@ -123,7 +131,6 @@ const generateFiles = async (filePath) => {
                     if (mainAction === REPLACE) {
                         lineOffset += 1;
                         codeLine = lines[i + lineOffset];
-                        cleanCode = codeLine.replace(/\t/g, '    ');
                         lineNumber = parseInt(line) - lineOffset - 1;
 
                         if (paste === 'false') {
@@ -149,10 +156,9 @@ const generateFiles = async (filePath) => {
 
                             const codeToReplace = lines[lineNumber + lineOffset];
                             // console.log({codeToReplace});
-                            const cleanCodeToReplace = codeToReplace.replace(/\t/g, '    ');
-                            const whiteSpacesCount = cleanCodeToReplace.length - cleanCodeToReplace.trimLeft().length;
+                            const whiteSpacesCount = codeToReplace.length - codeToReplace.trimLeft().length;
                             let accCodeLine = ''.padStart(whiteSpacesCount, ' ');
-                            const trimmedCode = cleanCodeToReplace.trimLeft();
+                            const trimmedCode = codeToReplace.trimLeft();
                             const codeArr = trimmedCode.split('');
 
                             [...codeArr].forEach(() => {
@@ -173,7 +179,7 @@ const generateFiles = async (filePath) => {
                             });
 
                             codeLines.push({
-                                code: cleanCode,
+                                code: codeLine,
                                 line: lineNumber,
                                 action: REPLACE,
                                 duration: 1, // seconds
@@ -189,9 +195,9 @@ const generateFiles = async (filePath) => {
                 }
             }
 
-            const whiteSpacesCount = cleanCode.length - cleanCode.trimLeft().length;
+            const whiteSpacesCount = codeLine.length - codeLine.trimLeft().length;
             let accCodeLine = ''.padStart(whiteSpacesCount, ' ');
-            const trimmedCode = cleanCode.trimLeft();
+            const trimmedCode = codeLine.trimLeft();
 
             if (mainAction === SKIP_TO) {
                 linesToSkip = lineNumber;
@@ -308,15 +314,15 @@ const generateFiles = async (filePath) => {
             continue;
         }
 
-        console.log(`generating HTML for line ${line}`);
+        console.log(`generating HTML for line ${line + 1}`);
         const html = generateHtml(
             codeToParse.filter((s) => s !== null).join('\n'),
             line,
-            codeLines.length,
+            lines.length + scrollThreshold,
             language
         );
 
-        writeFileSync(`./html/index-${line}.html`, html);
+        // writeFileSync(`./html/index-${line}.html`, html);
         const diff = line - scrollThreshold;
         const posY = Math.max((basePosY + (16 * diff)) * SCALE, 0);
 
@@ -335,4 +341,4 @@ const generateFiles = async (filePath) => {
 }
 
 const filePath = process.argv[2] || './examples/Test.jsx';
-generateFiles(filePath);
+generateFiles(filePath, true);
