@@ -1,5 +1,5 @@
 //# has-script
-//# skip_to,8
+//# skip_to,5
 import { useState } from "react";
 
 function Test() {

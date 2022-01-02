@@ -106,12 +106,17 @@ const generateFiles = async (filePath) => {
 
             if (hasScript && codeLine.trimLeft().startsWith(scriptStart)) {
                 const [, command] = codeLine.split(scriptStart);
-                const [action, line] = command.trim().split(',');
+                const [
+                    action,
+                    line,
+                    // lineQty = '1',
+                    paste = 'false',
+                ] = command.trim().split(',');
 
                 lineOffset += 1;
                 codeLine = lines[mainLine + lineOffset];
                 cleanCode = codeLine.replace(/\t/g, '    ');
-                // console.log({codeLine});
+                // console.log({codeLine, lineOffset});
                 mainLine = parseInt(line) - lineOffset;
                 const newAction = action.toUpperCase();
                 // console.log({newAction});
@@ -119,20 +124,46 @@ const generateFiles = async (filePath) => {
                 if ([REPLACE, SKIP_TO].includes(newAction)) {
                     mainAction = newAction;
 
+                    // TODO replace only works if is the last line
                     if (mainAction === REPLACE) {
-                        i += 1;
-                        codeLines.push({
-                            code: '|',
-                            line: mainLine,
-                            action: SELECT,
-                            duration: 2, // seconds
-                        });
-                        codeLines.push({
-                            code: ' ',
-                            line: mainLine,
-                            action: SELECT,
-                            duration: 0.5, // seconds
-                        });
+                        // lineOffset += 1;
+                        // i += 1;
+
+                        if (paste === 'false') {
+                            codeLines.push({
+                                code: '|',
+                                line: mainLine,
+                                action: SELECT,
+                                duration: 2, // seconds
+                            });
+                            codeLines.push({
+                                code: ' ',
+                                line: mainLine,
+                                action: SELECT,
+                                duration: 0.5, // seconds
+                            });
+                        } else {
+                            codeLines.push({
+                                code: '|',
+                                line: mainLine,
+                                action: SELECT,
+                                duration: 2, // seconds
+                            });
+                            codeLines.push({
+                                code: ' ',
+                                line: mainLine,
+                                action: SELECT,
+                                duration: 0.5, // seconds
+                            });
+                            codeLines.push({
+                                code: cleanCode,
+                                line: mainLine,
+                                action: REPLACE,
+                                duration: 1, // seconds
+                            });
+
+                            continue;
+                        }
                     }
                 }
             }
@@ -210,6 +241,9 @@ const generateFiles = async (filePath) => {
             duration = 1,
             skip = false,
         } = codeObj;
+
+        // console.log({codeObj, i})
+        // console.log({ codeToParse, line });
 
         if (action === ADD) {
             codeToParse.splice(line, 0, code);
