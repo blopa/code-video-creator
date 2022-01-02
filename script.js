@@ -384,4 +384,4 @@ const generateFiles = async (
 };
 
 const filePath = process.argv[2] || './examples/Test.jsx';
-generateFiles(filePath, true);
+generateFiles(filePath, true, 0.3);
