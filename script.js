@@ -91,6 +91,21 @@ const generateFiles = async (filePath) => {
         let cleanCode = codeLine.replace(/\t/g, '    ');
         let lineNumber = lineCount;
 
+        if (linesToSkip > 0) {
+            console.log('to aqui!!!', {linesToSkip});
+            codeLines.push({
+                code: cleanCode,
+                line: lineNumber,
+                action: ADD,
+                duration: 0, // seconds
+                skip: true,
+            });
+            linesToSkip -= 1;
+            lineCount += 1;
+
+            continue;
+        }
+
         if (cleanCode?.trim()?.length) {
             if (hasScript && codeLine.trimLeft().startsWith(scriptStart)) {
                 const [, command] = codeLine.split(scriptStart);
@@ -166,6 +181,10 @@ const generateFiles = async (filePath) => {
 
                             continue;
                         }
+                    } else if (mainAction === SKIP_TO) {
+                        // -2 because 1 to counter-down array starting with 0,
+                        // and 1 to get the line before and show the chosen line animation
+                        lineNumber = parseInt(line) - lineOffset - 2;
                     }
                 }
             }
