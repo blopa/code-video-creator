@@ -1,16 +1,31 @@
 require('@babel/register');
 
-const { generateHtml } = require('./utils');
 const puppeteer = require('puppeteer');
-const { PuppeteerScreenRecorder } = require('puppeteer-screen-recorder');
 const { readFileSync } = require('fs');
-const { WIDTH, HEIGHT, MAX_LINES, SCALE } = require("./constants");
+const {
+    PuppeteerScreenRecorder,
+} = require('puppeteer-screen-recorder');
+
+// Utils
+const { generateHtml } = require('./utils');
+
+// Constants
+const {
+    WIDTH,
+    SCALE,
+    HEIGHT,
+    MAX_LINES,
+} = require("./constants");
 
 const generateVideo = async (filePath) => {
-    const code = readFileSync(filePath, { encoding: 'utf8' });
+    const code = readFileSync(filePath, {
+        encoding: 'utf8',
+    });
     const lines = code.split('\n');
     const languages = JSON.parse(
-        readFileSync('./languages.json', { encoding: 'utf8' })
+        readFileSync('./languages.json', {
+            encoding: 'utf8',
+        })
     );
 
     const fileExtension = filePath.split('.').pop();
@@ -101,5 +116,7 @@ const generateVideo = async (filePath) => {
     await browser.close();
 }
 
-const filePath = process.argv[2] || './examples/Test.jsx';
+const filePath =
+    process.argv[2] || './examples/Test.jsx';
+
 generateVideo(filePath);
