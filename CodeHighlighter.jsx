@@ -1,31 +1,31 @@
 import React from 'react';
-import { HEIGHT, WIDTH, SCALE } from "./constants";
+import { HEIGHT, WIDTH, SCALE } from './constants';
 
 function CodeHighlighter({
     codeHtml,
     totalLines,
     currentLine,
 }) {
-    const lines = new Array(totalLines).fill(null).map((v, index) => {
-        return ((
-            <span
-                key={index}
-                style={{
-                    height: '16px',
-                    width: `${8 * (totalLines).toString().length}px`,
-                }}
-            >
-                {index + 1}
-            </span>
-        ));
-    });
+    const lines = new Array(totalLines).fill(null).map((v, index) => ((
+        <span
+            key={index}
+            style={{
+                height: '16px',
+                width: `${8 * (totalLines).toString().length}px`,
+            }}
+        >
+            {index + 1}
+        </span>
+    )));
 
     return (
-        <html>
+        <html lang="en">
             <style
-                dangerouslySetInnerHTML={{__html: `
+                dangerouslySetInnerHTML={{
+                    __html: `
                     body { color: white; }
-                `}}
+                `,
+                }}
             />
             <body
                 style={{
