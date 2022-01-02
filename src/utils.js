@@ -1,12 +1,14 @@
 require('@babel/register');
 
 import React from 'react';
-import Prism from 'prismjs';
 import {
     renderToStaticMarkup,
 } from 'react-dom/server';
 import { JSDOM } from 'jsdom';
 import { readFileSync } from 'fs';
+
+// Code highlighter
+import Prism from 'prismjs';
 import loadLanguages from 'prismjs/components/';
 import CodeHighlighter from './CodeHighlighter.jsx';
 

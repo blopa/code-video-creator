@@ -1,7 +1,9 @@
 require('@babel/register');
 
-const puppeteer = require('puppeteer');
 const { readFileSync } = require('fs');
+
+// Puppeteer
+const puppeteer = require('puppeteer');
 const {
     PuppeteerScreenRecorder,
 } = require('puppeteer-screen-recorder');
@@ -15,7 +17,7 @@ const {
     SCALE,
     HEIGHT,
     MAX_LINES,
-} = require("./constants");
+} = require('./constants');
 
 const generateVideo = async (filePath) => {
     const code = readFileSync(filePath, {
