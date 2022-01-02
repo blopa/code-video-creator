@@ -4,6 +4,8 @@ import { useState } from "react";
 
 function Test() {
     const [val, setVal] = useState(1);
+    //# replace,6,true
+    const [val, setVal] = useState(2);
 
     return (
         <div>
@@ -20,6 +22,3 @@ function Test() {
 }
 
 export default Test;
-
-//# replace,6
-const [val, setVal] = useState(2);
