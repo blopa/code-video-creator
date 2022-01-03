@@ -1,29 +1,7 @@
 {
-  "name": "video-creator",
-  "version": "0.1.0",
+  "name": "code-video-creator",
+  "version": "0.1.2",
   "private": true,
-  "devDependencies": {
-    "@babel/core": "^7.16.7",
-    "@babel/generator": "^7.16.7",
-    "@babel/parser": "^7.16.7",
-    "@babel/plugin-syntax-jsx": "^7.16.7",
-    "@babel/preset-react": "^7.16.7",
-    "@babel/register": "^7.16.7",
-    "@testing-library/jest-dom": "^5.16.1",
-    "@testing-library/react": "^12.1.2",
-    "@testing-library/user-event": "^13.5.0",
-    "abstract-syntax-tree": "^2.20.5",
-    "jsdom": "^19.0.0",
-    "jsx-node": "^0.3.1",
-    "npm-check-updates": "^12.1.0",
-    "prettier": "^2.5.1",
-    "prism-react-renderer": "^1.2.1",
-    "react": "^17.0.2",
-    "react-ast": "^0.3.1",
-    "react-code-blocks": "0.0.9-0",
-    "react-dom": "^17.0.2",
-    "styled-components": "^5.3.3"
-  },
   "scripts": {
     "generate": "node -r esm src/script.js",
     "bump": "ncu -u -t minor"
@@ -41,10 +19,22 @@
     ]
   },
   "dependencies": {
+    "@babel/core": "^7.16.7",
+    "@babel/generator": "^7.16.7",
+    "@babel/parser": "^7.16.7",
+    "@babel/plugin-syntax-jsx": "^7.16.7",
+    "@babel/preset-react": "^7.16.7",
+    "@babel/register": "^7.16.7",
     "esm": "^3.2.25",
+    "jsdom": "^19.0.0",
+    "jsx-node": "^0.3.1",
+    "npm-check-updates": "^12.1.0",
+    "prettier": "^2.5.1",
     "prism-themes": "^1.9.0",
     "prismjs": "^1.25.0",
     "puppeteer": "^13.0.1",
-    "puppeteer-screen-recorder": "^2.0.2"
+    "puppeteer-screen-recorder": "^2.0.2",
+    "react": "^17.0.2",
+    "react-dom": "^17.0.2"
   }
 }

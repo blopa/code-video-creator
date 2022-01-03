@@ -116,6 +116,7 @@ const generateVideo = async (filePath) => {
 
     await recorder.stop();
     await browser.close();
+    console.log('Done!');
 }
 
 const filePath =
