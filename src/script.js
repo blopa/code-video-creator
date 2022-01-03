@@ -4,9 +4,7 @@ const { readFileSync } = require('fs');
 
 // Puppeteer
 const puppeteer = require('puppeteer');
-const {
-    PuppeteerScreenRecorder,
-} = require('puppeteer-screen-recorder');
+const { PuppeteerScreenRecorder } = require('puppeteer-screen-recorder');
 
 // Utils
 const { generateHtml } = require('./utils');
@@ -16,29 +14,31 @@ const {
     WIDTH,
     SCALE,
     HEIGHT,
+    ENCODING,
     MAX_LINES,
+    LINE_HEIGHT,
 } = require('./constants');
 
 const generateVideo = async (filePath) => {
     const code = readFileSync(filePath, {
-        encoding: 'utf8',
+        encoding: ENCODING,
     });
     const lines = code.split('\n');
+
+    // detect file language
+    const fileExtension = filePath.split('.').pop();
     const languages = JSON.parse(
         readFileSync('./languages.json', {
-            encoding: 'utf8',
+            encoding: ENCODING,
         })
     );
-
-    const fileExtension = filePath.split('.').pop();
     const locatedLang = Object.entries(languages).find(
         ([lang, ext]) => ext.includes(fileExtension)
     );
     const language = locatedLang[0] || 'javascript';
-
     console.log(`language is: ${language}`);
 
-    // Puppeteer
+    // Puppeteer config
     const browser = await puppeteer.launch({
         headless: true,
         args: [`--window-size=${WIDTH},${HEIGHT}`],
@@ -48,6 +48,7 @@ const generateVideo = async (filePath) => {
         },
     });
 
+    // open a new empty page
     const page = await browser.newPage();
     const config = {
         followNewTab: false,
@@ -65,6 +66,7 @@ const generateVideo = async (filePath) => {
         config
     );
 
+    // start recording
     await recorder.start('./output.mp4');
     await page.waitForTimeout(500);
 
@@ -80,6 +82,7 @@ const generateVideo = async (filePath) => {
 
         codeToParse.push(line);
 
+        // get full page HTML
         const html = generateHtml(
             codeToParse.join('\n'),
             index - 1,
@@ -87,20 +90,16 @@ const generateVideo = async (filePath) => {
             language
         );
 
+        // set page HTML
+        await page.setContent(html);
+
         const diff = index - scrollThreshold;
         const posY = Math.max(
-            (basePosY + (16 * diff)) * SCALE,
+            (basePosY + (LINE_HEIGHT * diff)) * SCALE,
             0
         );
 
-        if (prevPosY !== posY) {
-            await page.waitForTimeout(
-                0.18 * Math.abs(posY - prevPosY)
-            );
-        }
-
-        await page.setContent(html);
-
+        // scroll down or up if needed
         if (prevPosY !== posY) {
             await page.evaluate((posY) => {
                 window.scrollTo({

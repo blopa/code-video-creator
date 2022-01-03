@@ -1,11 +1,8 @@
-require('@babel/register');
-
 import React from 'react';
-import {
-    renderToStaticMarkup,
-} from 'react-dom/server';
+import { renderToStaticMarkup } from 'react-dom/server';
 import { JSDOM } from 'jsdom';
 import { readFileSync } from 'fs';
+import { ENCODING } from './constants';
 
 // Code highlighter
 import Prism from 'prismjs';
@@ -14,7 +11,7 @@ import CodeHighlighter from './CodeHighlighter.jsx';
 
 const styling = readFileSync(
     './node_modules/prism-themes/themes/prism-material-dark.css',
-    { encoding: 'utf8' }
+    { encoding: ENCODING }
 );
 
 export const generateHtml = (
@@ -30,7 +27,7 @@ export const generateHtml = (
         language
     );
 
-    // console.log({code});
+    // get HTML string
     const html = renderToStaticMarkup((
         <CodeHighlighter
             codeHtml={codeHtml}
@@ -42,12 +39,10 @@ export const generateHtml = (
     const { window } = new JSDOM(html);
     const { document } = window;
 
+    // Add Prism.js styling to the HTML document
     const style = document.createElement('style');
     style.textContent = styling;
     document.head.appendChild(style);
 
     return document.getElementsByTagName('html')[0].outerHTML;
 };
-
-export const getRandomBetween = (max, min) =>
-    Math.floor(Math.random() * (max - min + 1)) + min;

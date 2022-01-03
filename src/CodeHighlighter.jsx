@@ -1,5 +1,5 @@
 import React from 'react';
-import { HEIGHT, WIDTH, SCALE } from './constants';
+import { HEIGHT, WIDTH, SCALE, LINE_HEIGHT } from './constants';
 
 function CodeHighlighter({
     codeHtml,
@@ -10,7 +10,7 @@ function CodeHighlighter({
         <span
             key={index}
             style={{
-                height: '16px',
+                height: `${LINE_HEIGHT}px`,
                 width: `${8 * (totalLines).toString().length}px`,
             }}
         >
@@ -39,7 +39,6 @@ function CodeHighlighter({
             >
                 <div
                     style={{
-                        // background: '#272822',
                         display: 'flex',
                         margin: '20px 0 0 2px',
                     }}
@@ -51,7 +50,7 @@ function CodeHighlighter({
                             height: `${4 * SCALE}px`,
                             backgroundColor: '#44463a',
                             zIndex: -1,
-                            marginTop: `${currentLine * 16}px`,
+                            marginTop: `${currentLine * LINE_HEIGHT}px`,
                         }}
                     />
                     <div
