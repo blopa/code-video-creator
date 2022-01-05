@@ -7,6 +7,14 @@ function Test() {
     //# replace,6,true
     const [val, setVal] = useState(2);
 
+    const func = () => {
+    };
+    //# move_up,1
+        console.log(1);
+    //# move_down,1
+
+    func();
+
     return (
         <div>
             <p>Hello World!</p>

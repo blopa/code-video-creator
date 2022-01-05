@@ -19,8 +19,10 @@ const {
     REMOVE,
     SELECT,
     SKIP_TO,
+    MOVE_UP,
     REPLACE,
     MAX_LINES,
+    MOVE_DOWN,
 } = require('./constants');
 
 const createVideo = async (htmls) => {
@@ -145,12 +147,12 @@ const generateFiles = async (
                 const [
                     action,
                     line,
-                    // lineQty = '1',
                     paste = 'false',
+                    // lineQty = '1',
                 ] = command.trim().split(',');
                 const newAction = action.toUpperCase();
 
-                if ([REPLACE, SKIP_TO].includes(newAction)) {
+                if ([REPLACE, SKIP_TO, MOVE_UP, MOVE_DOWN].includes(newAction)) {
                     mainAction = newAction;
 
                     if (mainAction === REPLACE) {
@@ -192,7 +194,7 @@ const generateFiles = async (
                                     code: `${accCodeLine + codeArr.join('')}|`,
                                     line: lineNumber,
                                     action: REPLACE,
-                                    duration: 0.01, // seconds
+                                    duration: 0.06, // seconds
                                 });
                             });
 
@@ -200,7 +202,14 @@ const generateFiles = async (
                                 code: ' ',
                                 line: lineNumber,
                                 action: SELECT,
-                                duration: 1, // seconds
+                                duration: 0.5, // seconds
+                            });
+
+                            codeLines.push({
+                                code: ' ',
+                                line: lineNumber,
+                                action: REPLACE,
+                                duration: 0.5, // seconds
                             });
 
                             codeLines.push({
@@ -218,6 +227,10 @@ const generateFiles = async (
                          * and 1 to get the line before and show the chosen line animation
                          */
                         lineNumber = Number.parseInt(line, 10) - lineOffset - 2;
+                    } else if (mainAction === MOVE_UP) {
+                        lineCount -= Number.parseInt(line, 10);
+                    } else if (mainAction === MOVE_DOWN) {
+                        lineCount += Number.parseInt(line, 10);
                     }
                 }
             }
@@ -228,7 +241,7 @@ const generateFiles = async (
 
             if (mainAction === SKIP_TO) {
                 linesToSkip = lineNumber;
-            } else {
+            } else if (![MOVE_DOWN, MOVE_UP].includes(mainAction)) {
                 codeLines.push({
                     code: `${accCodeLine}|`,
                     line: lineNumber,
