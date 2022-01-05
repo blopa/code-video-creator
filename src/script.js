@@ -85,7 +85,8 @@ const createVideo = async (htmls) => {
 const generateFiles = async (
     filePath,
     smallTabs = false,
-    typingSpeed = 1
+    typingSpeed = 1,
+    blinkTextBar = false,
 ) => {
     const sourceCode = readFileSync(filePath, { encoding: 'utf8' });
 
@@ -232,14 +233,14 @@ const generateFiles = async (
                     code: `${accCodeLine}|`,
                     line: lineNumber,
                     action: mainAction,
-                    duration: 0.9, // seconds
+                    duration: 0.4, // seconds
                 });
 
                 codeLines.push({
                     code: `${accCodeLine}|`,
                     line: lineNumber,
                     action: REPLACE,
-                    duration: 0.1, // seconds
+                    duration: 0.2, // seconds
                 });
 
                 [...trimmedCode].forEach((letter, idx) => {
@@ -254,6 +255,22 @@ const generateFiles = async (
                     });
                 });
 
+                if (blinkTextBar) {
+                    codeLines.push({
+                        code: `${codeLine}|`,
+                        line: lineNumber,
+                        action: REPLACE,
+                        duration: 0.2, // seconds
+                    });
+
+                    codeLines.push({
+                        code: codeLine,
+                        line: lineNumber,
+                        action: REPLACE,
+                        duration: 0.2, // seconds
+                    });
+                }
+
                 if (![REPLACE].includes(mainAction)) {
                     lineCount += 1;
                 }
@@ -264,14 +281,29 @@ const generateFiles = async (
                 code: `${codeLine}|`,
                 line: lineNumber,
                 action: ADD,
-                duration: 0.5, // seconds
+                duration: 0.2, // seconds
             });
             codeLines.push({
                 code: codeLine,
                 line: lineNumber,
                 action: REPLACE,
-                duration: 0.1, // seconds
+                duration: 0.2, // seconds
             });
+
+            if (blinkTextBar) {
+                codeLines.push({
+                    code: `${codeLine}|`,
+                    line: lineNumber,
+                    action: REPLACE,
+                    duration: 0.2, // seconds
+                });
+                codeLines.push({
+                    code: codeLine,
+                    line: lineNumber,
+                    action: REPLACE,
+                    duration: 0.2, // seconds
+                });
+            }
 
             if (![REPLACE].includes(mainAction)) {
                 lineCount += 1;
@@ -384,4 +416,9 @@ const generateFiles = async (
 };
 
 const filePath = process.argv[2] || './examples/Test.jsx';
-generateFiles(filePath, true, 0.3);
+generateFiles(
+    filePath,
+    false,
+    1,
+    true
+);
