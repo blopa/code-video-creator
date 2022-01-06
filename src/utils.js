@@ -28,12 +28,13 @@ export const generateHtml = (
     );
 
     // console.log({code});
-    const reactElement = React.createElement(CodeHighlighter, {
-        codeHtml,
-        totalLines,
-        currentLine,
-    }, null);
-    const html = renderToStaticMarkup(reactElement);
+    const html = renderToStaticMarkup((
+        <CodeHighlighter
+            codeHtml={codeHtml}
+            totalLines={totalLines}
+            currentLine={currentLine}
+        />
+    ));
 
     const { window } = new JSDOM(html);
     const { document } = window;
