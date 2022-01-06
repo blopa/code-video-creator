@@ -11,19 +11,6 @@ I have no idea why I made this... but there you go.
 ## Languages
 Add your language and extensions to the file `languages.json` so they can be automatically detected by this script, as long as the language is supported by [Prism.js](https://prismjs.com/).
 
-## How to use
-Run
-```shell
-npm install code-video-creator
-npm run code-video-creator test.js
-```
-Where "test.js" should be the path to your file. A file called "output.mp4" will be created in the folder you called the script from.
-
-## Options
-```shell
-npm run code-video-creator test.js --smallTabs true --blinkTextBar true --typingSpeed 1 --lineDuration 1
-```
-
 ## Development
 Run
 ```shell
@@ -37,6 +24,11 @@ npm run generate test.js
 ```
 
 Where "test.js" should be the path to your file.
+
+## Options
+```shell
+npm run generate test.js --smallTabs true --blinkTextBar true --typingSpeed 1 --lineDuration 1
+```
 
 ## Disclaimer
 This is 100% NOT production ready and the code is not optimized at all. Maybe I will make it better in the future ¯\_(ツ)_/¯
