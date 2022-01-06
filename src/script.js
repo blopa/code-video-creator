@@ -25,7 +25,7 @@ const {
     MOVE_DOWN,
 } = require('./constants');
 
-const createVideo = async (htmls) => {
+const createVideo = async (htmls, lineDuration) => {
     const browser = await puppeteer.launch({
         headless: true,
         args: [`--window-size=${WIDTH},${HEIGHT}`],
@@ -50,7 +50,7 @@ const createVideo = async (htmls) => {
 
     const recorder = new PuppeteerScreenRecorder(page, config);
     await recorder.start('./output.mp4');
-    await page.waitForTimeout(1000);
+    await page.waitForTimeout(1000 * lineDuration);
     console.log('start recording...');
 
     let prevPosY = null;
@@ -85,10 +85,12 @@ const createVideo = async (htmls) => {
 };
 
 const generateFiles = async (
-    filePath,
-    smallTabs = false,
-    typingSpeed = 1,
-    blinkTextBar = false,
+    filePath, {
+        smallTabs = false,
+        typingSpeed = 1,
+        lineDuration = 1,
+        blinkTextBar = false,
+    } = {}
 ) => {
     const sourceCode = readFileSync(filePath, { encoding: 'utf8' });
 
@@ -165,20 +167,20 @@ const generateFiles = async (
                                 code: '|',
                                 line: lineNumber,
                                 action: SELECT,
-                                duration: 2, // seconds
+                                duration: 2 * lineDuration, // seconds
                             });
                             codeLines.push({
                                 code: ' ',
                                 line: lineNumber,
                                 action: SELECT,
-                                duration: 0.5, // seconds
+                                duration: 0.5 * lineDuration, // seconds
                             });
                         } else {
                             codeLines.push({
                                 code: '|',
                                 line: lineNumber,
                                 action: SELECT,
-                                duration: 1, // seconds
+                                duration: lineDuration, // seconds
                             });
 
                             const codeToReplace = lines[lineNumber + lineOffset];
@@ -202,21 +204,21 @@ const generateFiles = async (
                                 code: ' ',
                                 line: lineNumber,
                                 action: SELECT,
-                                duration: 0.5, // seconds
+                                duration: 0.5 * lineDuration, // seconds
                             });
 
                             codeLines.push({
                                 code: ' ',
                                 line: lineNumber,
                                 action: REPLACE,
-                                duration: 0.5, // seconds
+                                duration: 0.5 * lineDuration, // seconds
                             });
 
                             codeLines.push({
                                 code: codeLine,
                                 line: lineNumber,
                                 action: REPLACE,
-                                duration: 1, // seconds
+                                duration: lineDuration, // seconds
                             });
 
                             continue;
@@ -246,14 +248,14 @@ const generateFiles = async (
                     code: `${accCodeLine}|`,
                     line: lineNumber,
                     action: mainAction,
-                    duration: 0.4, // seconds
+                    duration: 0.4 * lineDuration, // seconds
                 });
 
                 codeLines.push({
                     code: `${accCodeLine}|`,
                     line: lineNumber,
                     action: REPLACE,
-                    duration: 0.2, // seconds
+                    duration: 0.2 * lineDuration, // seconds
                 });
 
                 [...trimmedCode].forEach((letter, idx) => {
@@ -424,14 +426,17 @@ const generateFiles = async (
 
     console.log('creating video...');
     await createVideo(
-        htmls
+        htmls,
+        lineDuration
     );
 };
 
 const filePath = process.argv[2] || './examples/Test.jsx';
 generateFiles(
-    filePath,
-    false,
-    1,
-    true
+    filePath, {
+        smallTabs: false,
+        typingSpeed: 0.4,
+        lineDuration: 0.4,
+        blinkTextBar: false,
+    }
 );
