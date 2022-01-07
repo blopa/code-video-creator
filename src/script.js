@@ -281,11 +281,13 @@ const generateFiles = async (
                     }
 
                     case MOVE_UP: {
-                        // lineCount -= Number.parseInt(line, 10);
+                        i -= 1;
+                        lineCount -= Number.parseInt(line, 10);
                         continue;
                     }
 
                     case MOVE_DOWN: {
+                        i -= 1;
                         lineCount += Number.parseInt(line, 10);
                         continue;
                     }
