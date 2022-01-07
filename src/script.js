@@ -85,6 +85,10 @@ const createVideo = async (htmls, lineDuration) => {
     await browser.close();
 };
 
+const getBlinkingTextBarActionArray = () => {
+    // TODO
+};
+
 const getTypeInActionArray = (
     codeLine,
     lineNumber,
@@ -240,11 +244,24 @@ const generateFiles = async (
     const offsetMap = {};
     for (let i = 0; (i + lineOffset) < lines.length; i++) {
         offsetMap[i + lineOffset] = lineOffset;
-        let newCodeLines = [];
         let mainAction = ADD;
         let codeLine = lines[i + lineOffset];
         // console.log({lineCount, i, lineOffset, len: lines.length, codeLine});
         let lineNumber = lineCount;
+
+        if (linesToSkip > 0) {
+            codeLines.push({
+                code: codeLine,
+                line: lineNumber,
+                action: ADD,
+                duration: 0, // seconds
+                skip: true,
+            });
+            linesToSkip -= 1;
+            lineCount += 1;
+
+            continue;
+        }
 
         if (codeLine?.trim()?.length) {
             if (hasScript && codeLine.trimStart().startsWith(scriptStart)) {
@@ -268,14 +285,17 @@ const generateFiles = async (
                         i -= 1;
                         lineOffset += 1;
 
-                        newCodeLines = getReplaceActionArray(
-                            codeLine,
-                            lineNumber,
-                            lineDuration,
-                            paste,
-                            codeToReplace,
-                            typingSpeed
-                        );
+                        codeLines = [
+                            ...codeLines,
+                            ...getReplaceActionArray(
+                                codeLine,
+                                lineNumber,
+                                lineDuration,
+                                paste,
+                                codeToReplace,
+                                typingSpeed
+                            ),
+                        ];
 
                         break;
                     }
@@ -298,38 +318,50 @@ const generateFiles = async (
                     }
 
                     case SKIP_TO: {
-                        lineNumber = Number.parseInt(line, 10) - lineOffset;
-                        break;
+                        i -= 1;
+                        linesToSkip = (Number.parseInt(line, 10) - lineOffset) - 1;
+                        continue;
                     }
                 }
             } else {
                 // do not have command
-                console.log({ codeLine, lineNumber });
-                newCodeLines = getTypeInActionArray(
-                    codeLine,
-                    lineNumber,
-                    typingSpeed,
-                    ADD,
-                    lineDuration
-                );
+                codeLines = [
+                    ...codeLines,
+                    ...getTypeInActionArray(
+                        codeLine,
+                        lineNumber,
+                        typingSpeed,
+                        ADD,
+                        lineDuration
+                    ),
+                ];
             }
         } else {
             codeLines.push({
-                code: codeLine,
+                code: `${codeLine}|`,
                 line: lineNumber,
                 action: ADD,
-                duration: 1, // seconds
+                duration: 0.2, // seconds
             });
+
+            codeLines.push({
+                code: codeLine,
+                line: lineNumber,
+                action: REPLACE,
+                duration: 0.2, // seconds
+            });
+
+            // if (extraWait) {
+            //     codeLines = [
+            //         ...codeLines,
+            //         ...getBlinkingTextBarActionArray(),
+            //     ];
+            // }
         }
 
         if (![REPLACE].includes(mainAction)) {
             lineCount += 1;
         }
-
-        codeLines = [
-            ...codeLines,
-            ...newCodeLines,
-        ];
     }
 
     // console.log({codeLines, lines});
