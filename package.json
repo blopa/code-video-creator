@@ -1,6 +1,6 @@
 {
   "name": "code-video-creator",
-  "version": "0.2.4",
+  "version": "0.2.5",
   "private": false,
   "devDependencies": {
     "npm-check-updates": "^12.1.0"
