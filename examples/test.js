@@ -5,12 +5,12 @@ log(null);
 log(0);
 log(1);
 
-//# replace,6,true
+//# replace,6
 log('1');
 log(2);
 
 
-//# wait,10
+//# line_duration,0.2
 const func = () => {
 };
 //# move_up,1

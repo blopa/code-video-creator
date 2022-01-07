@@ -24,6 +24,7 @@ const {
     REPLACE,
     MAX_LINES,
     MOVE_DOWN,
+    LINE_DURATION,
 } = require('./constants');
 
 const getExtraWaitActionArray = (
@@ -122,7 +123,7 @@ const getTypeInActionArray = (
             code: accCodeLine + ext,
             line: lineNumber,
             action: REPLACE,
-            duration: (getRandomBetween(300, 80) / 1000) * typingSpeed, // seconds
+            duration: (getRandomBetween(300, 80) / 1000) * typingSpeed * lineDuration, // seconds
         });
     });
 
@@ -164,15 +165,28 @@ const getReplaceActionArray = (
     let codeLines = [];
 
     if (paste === 'false') {
-        const newCodeLines = getTypeInActionArray(
-            codeLine,
-            lineNumber,
-            typingSpeed,
-            REPLACE,
-            lineDuration
-        );
-
-        codeLines = [...codeLines, ...newCodeLines];
+        codeLines = [
+            ...codeLines,
+            ...getBlinkingTextBarActionArray(
+                codeToReplace,
+                lineNumber,
+                lineDuration / 2, // extraWait
+                blinkDuration
+            ),
+            ...getBlinkingTextBarActionArray(
+                '',
+                lineNumber,
+                lineDuration / 2, // extraWait
+                blinkDuration
+            ),
+            ...getTypeInActionArray(
+                codeLine,
+                lineNumber,
+                typingSpeed,
+                REPLACE,
+                lineDuration
+            ),
+        ];
     } else {
         codeLines = [
             ...codeLines,
@@ -184,13 +198,17 @@ const getReplaceActionArray = (
             ),
         ];
 
-        let newCodeLines = getTypeOutActionArray(
-            codeToReplace,
-            lineNumber
-        );
-
-        newCodeLines = [
-            ...newCodeLines,
+        let newCodeLines = [
+            ...getTypeOutActionArray(
+                codeToReplace,
+                lineNumber
+            ),
+            ...getBlinkingTextBarActionArray(
+                '',
+                lineNumber,
+                lineDuration / 2, // extraWait
+                blinkDuration
+            ),
             ...getBlinkingTextBarActionArray(
                 codeLine,
                 lineNumber,
@@ -244,6 +262,7 @@ const generateFiles = async (
     let codeLines = [];
     let lineCount = 0;
     let linesToSkip = 0;
+    let lineDurMplier = 1;
     let extraWait = 0;
     const blinkDuration = 0.2;
     const offsetMap = {};
@@ -295,7 +314,7 @@ const generateFiles = async (
                             ...getReplaceActionArray(
                                 codeLine,
                                 lineNumber,
-                                lineDuration,
+                                lineDuration * lineDurMplier,
                                 paste,
                                 codeToReplace,
                                 typingSpeed,
@@ -325,6 +344,11 @@ const generateFiles = async (
                         linesToSkip = (Number.parseInt(line, 10) - lineOffset) - 1;
                         continue;
                     }
+
+                    case LINE_DURATION: {
+                        lineDurMplier = Number.parseFloat(line);
+                        continue;
+                    }
                 }
             } else {
                 // do not have command
@@ -335,7 +359,7 @@ const generateFiles = async (
                         lineNumber,
                         typingSpeed,
                         ADD,
-                        lineDuration
+                        lineDuration * lineDurMplier
                     ),
                     ...getExtraWaitActionArray(
                         codeLine,
@@ -374,6 +398,7 @@ const generateFiles = async (
         }
 
         extraWait = 0;
+        lineDurMplier = 1;
         if (![REPLACE].includes(mainAction)) {
             lineCount += 1;
         }
