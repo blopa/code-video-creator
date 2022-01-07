@@ -28,7 +28,7 @@ const {
 
 const createVideo = async (htmls, lineDuration) => {
     const browser = await puppeteer.launch({
-        headless: false,
+        headless: true,
         args: [`--window-size=${WIDTH},${HEIGHT}`],
         defaultViewport: {
             width: WIDTH,
@@ -86,11 +86,11 @@ const createVideo = async (htmls, lineDuration) => {
 };
 
 const getExtraWaitActionArray = (
+    codeLine,
+    lineNumber,
     extraWait,
     blinkTextBar,
-    blinkDuration,
-    codeLine,
-    lineNumber
+    blinkDuration
 ) => {
     let codeLines = [];
 
@@ -99,10 +99,10 @@ const getExtraWaitActionArray = (
             codeLines = [
                 ...codeLines,
                 ...getBlinkingTextBarActionArray(
-                    extraWait,
-                    blinkDuration,
                     codeLine,
-                    lineNumber
+                    lineNumber,
+                    extraWait,
+                    blinkDuration
                 ),
             ];
         } else {
@@ -119,10 +119,10 @@ const getExtraWaitActionArray = (
 };
 
 const getBlinkingTextBarActionArray = (
-    extraWait,
-    blinkDuration,
     codeLine,
     lineNumber,
+    extraWait,
+    blinkDuration
 ) => {
     const codeLines = [];
 
@@ -389,11 +389,11 @@ const generateFiles = async (
                         lineDuration
                     ),
                     ...getExtraWaitActionArray(
+                        codeLine,
+                        lineNumber,
                         extraWait,
                         blinkTextBar,
-                        blinkDuration,
-                        codeLine,
-                        lineNumber
+                        blinkDuration
                     ),
                 ];
             }
@@ -415,11 +415,11 @@ const generateFiles = async (
             codeLines = [
                 ...codeLines,
                 ...getExtraWaitActionArray(
+                    codeLine,
+                    lineNumber,
                     extraWait,
                     blinkTextBar,
-                    blinkDuration,
-                    codeLine,
-                    lineNumber
+                    blinkDuration
                 ),
             ];
         }
