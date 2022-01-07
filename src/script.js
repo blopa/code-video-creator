@@ -332,14 +332,14 @@ const generateFiles = async (
                 ] = command.trim().split(',');
                 mainAction = action.toUpperCase();
                 lineOffset += 1;
+                i -= 1;
 
                 switch (mainAction) {
                     case REPLACE: {
                         lineNumber = Number.parseInt(line, 10);
                         const codeToReplace = lines[lineNumber - 1];
                         lineNumber -= offsetMap[lineNumber] + 1;
-                        codeLine = lines[i + lineOffset];
-                        i -= 1;
+                        codeLine = lines[i + lineOffset + 1];
                         lineOffset += 1;
 
                         codeLines = [
@@ -358,25 +358,21 @@ const generateFiles = async (
                     }
 
                     case MOVE_UP: {
-                        i -= 1;
                         lineCount -= Number.parseInt(line, 10);
                         continue;
                     }
 
                     case MOVE_DOWN: {
-                        i -= 1;
                         lineCount += Number.parseInt(line, 10);
                         continue;
                     }
 
                     case WAIT: {
-                        i -= 1;
                         extraWait = Number.parseInt(line, 10);
                         continue;
                     }
 
                     case SKIP_TO: {
-                        i -= 1;
                         linesToSkip = (Number.parseInt(line, 10) - lineOffset) - 1;
                         continue;
                     }
@@ -433,10 +429,6 @@ const generateFiles = async (
             lineCount += 1;
         }
     }
-
-    // console.log({codeLines, lines});
-
-    // return;
 
     // const html = generateHtml(code, lines.length, lines.length);
     // writeFileSync("./html/index.html", html);
@@ -496,7 +488,7 @@ const generateFiles = async (
 
             case REPLACE: {
                 const lineCode = codeToParse[line];
-                if (!lineCode) console.log({ codeToParse, codeObj, lineCode });
+                // if (!lineCode) console.log({ codeToParse, codeObj, lineCode });
                 const whiteSpacesCount = lineCode.length - lineCode.trimStart().length;
                 const accCodeLine = ''.padStart(whiteSpacesCount, ' ');
 
