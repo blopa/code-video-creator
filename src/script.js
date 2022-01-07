@@ -85,6 +85,117 @@ const createVideo = async (htmls, lineDuration) => {
     await browser.close();
 };
 
+const getTypeInActionArray = (
+    codeLine,
+    lineNumber,
+    typingSpeed,
+    mainAction,
+    lineDuration
+) => {
+    let codeLines = [];
+
+    const whiteSpacesCount = codeLine.length - codeLine.trimStart().length;
+    let accCodeLine = ''.padStart(whiteSpacesCount, ' ');
+    const trimmedCode = codeLine.trimStart();
+
+    codeLines.push({
+        code: `${accCodeLine}|`,
+        line: lineNumber,
+        action: mainAction,
+        duration: 0.4 * lineDuration, // seconds
+    });
+
+    codeLines.push({
+        code: `${accCodeLine}`,
+        line: lineNumber,
+        action: REPLACE,
+        duration: 0.2 * lineDuration, // seconds
+    });
+
+    [...trimmedCode].forEach((letter, idx) => {
+        accCodeLine += letter;
+        const ext = idx + 1 === trimmedCode.length ? '' : '|';
+
+        codeLines.push({
+            code: accCodeLine + ext,
+            line: lineNumber,
+            action: REPLACE,
+            duration: (getRandomBetween(300, 80) / 1000) * typingSpeed, // seconds
+        });
+    });
+
+    return codeLines;
+};
+
+const getTypeOutActionArray = (
+    codeToReplace,
+    lineNumber
+) => {
+    let codeLines = [];
+    const whiteSpacesCount = codeToReplace.length - codeToReplace.trimStart().length;
+    const accCodeLine = ''.padStart(whiteSpacesCount, ' ');
+    const trimmedCode = codeToReplace.trimStart();
+    const codeArr = [...trimmedCode];
+
+    [...codeArr].forEach(() => {
+        codeArr.pop();
+        codeLines.push({
+            code: `${accCodeLine + codeArr.join('')}|`,
+            line: lineNumber,
+            action: REPLACE,
+            duration: 0.06, // seconds
+        });
+    });
+
+    return codeLines;
+}
+
+const getReplaceActionArray = (
+    codeLine,
+    lineNumber,
+    lineDuration,
+    paste,
+    codeToReplace,
+    typingSpeed
+) => {
+    let codeLines = [];
+
+    if (paste === 'false') {
+        const newCodeLines = getTypeInActionArray(
+            codeLine,
+            lineNumber,
+            typingSpeed,
+            REPLACE,
+            lineDuration
+        );
+
+        codeLines = [...codeLines, ...newCodeLines];
+    } else {
+        const newCodeLines = getTypeOutActionArray(
+            codeToReplace,
+            lineNumber
+        );
+
+        newCodeLines.push({
+            code: ' ',
+            line: lineNumber,
+            action: REPLACE,
+            duration: 0.5 * lineDuration, // seconds
+        });
+
+        newCodeLines.push({
+            code: codeLine,
+            line: lineNumber,
+            action: REPLACE,
+            duration: lineDuration, // seconds
+        });
+
+        codeLines = [...codeLines, ...newCodeLines];
+    }
+
+    return codeLines;
+}
+
 const generateFiles = async (
     filePath, {
         smallTabs = false,
@@ -121,33 +232,23 @@ const generateFiles = async (
         lineOffset += 1;
     }
 
-    const codeLines = [];
+    let codeLines = [];
     let lineCount = 0;
     let linesToSkip = 0;
     let extraWait = 0;
     const blinkDuration = 0.2;
+    const offsetMap = {};
     for (let i = 0; (i + lineOffset) < lines.length; i++) {
+        offsetMap[i + lineOffset] = lineOffset;
+        let newCodeLines = [];
         let mainAction = ADD;
         let codeLine = lines[i + lineOffset];
         // console.log({lineCount, i, lineOffset, len: lines.length, codeLine});
         let lineNumber = lineCount;
 
-        if (linesToSkip > 0) {
-            codeLines.push({
-                code: codeLine,
-                line: lineNumber,
-                action: ADD,
-                duration: 0, // seconds
-                skip: true,
-            });
-            linesToSkip -= 1;
-            lineCount += 1;
-
-            continue;
-        }
-
         if (codeLine?.trim()?.length) {
             if (hasScript && codeLine.trimStart().startsWith(scriptStart)) {
+                // has command
                 const [, command] = codeLine.split(scriptStart);
                 const [
                     action,
@@ -155,243 +256,83 @@ const generateFiles = async (
                     paste = 'false',
                     // lineQty = '1',
                 ] = command.trim().split(',');
-                const newAction = action.toUpperCase();
+                mainAction = action.toUpperCase();
+                lineOffset += 1;
 
-                if ([WAIT, REPLACE, SKIP_TO, MOVE_UP, MOVE_DOWN].includes(newAction)) {
-                    mainAction = newAction;
-
-                    if (mainAction === REPLACE) {
-                        lineOffset += 1;
+                switch (mainAction) {
+                    case REPLACE: {
+                        lineNumber = Number.parseInt(line, 10);
+                        const codeToReplace = lines[lineNumber - 1];
+                        lineNumber -= offsetMap[lineNumber] + 1;
                         codeLine = lines[i + lineOffset];
-                        lineNumber = Number.parseInt(line, 10) - lineOffset - 1;
+                        i -= 1;
+                        lineOffset += 1;
 
-                        if (paste === 'false') {
-                            codeLines.push({
-                                code: '|',
-                                line: lineNumber,
-                                action: SELECT,
-                                duration: 2 * lineDuration, // seconds
-                            });
-                            codeLines.push({
-                                code: ' ',
-                                line: lineNumber,
-                                action: SELECT,
-                                duration: 0.5 * lineDuration, // seconds
-                            });
-                        } else {
-                            codeLines.push({
-                                code: '|',
-                                line: lineNumber,
-                                action: SELECT,
-                                duration: lineDuration, // seconds
-                            });
+                        newCodeLines = getReplaceActionArray(
+                            codeLine,
+                            lineNumber,
+                            lineDuration,
+                            paste,
+                            codeToReplace,
+                            typingSpeed
+                        );
 
-                            const codeToReplace = lines[lineNumber + lineOffset];
-                            // console.log({codeToReplace});
-                            const whiteSpacesCount = codeToReplace.length - codeToReplace.trimStart().length;
-                            const accCodeLine = ''.padStart(whiteSpacesCount, ' ');
-                            const trimmedCode = codeToReplace.trimStart();
-                            const codeArr = [...trimmedCode];
+                        break;
+                    }
 
-                            [...codeArr].forEach(() => {
-                                codeArr.pop();
-                                codeLines.push({
-                                    code: `${accCodeLine + codeArr.join('')}|`,
-                                    line: lineNumber,
-                                    action: REPLACE,
-                                    duration: 0.06, // seconds
-                                });
-                            });
+                    case MOVE_UP: {
+                        // lineCount -= Number.parseInt(line, 10);
+                        continue;
+                    }
 
-                            codeLines.push({
-                                code: ' ',
-                                line: lineNumber,
-                                action: SELECT,
-                                duration: 0.5 * lineDuration, // seconds
-                            });
-
-                            codeLines.push({
-                                code: ' ',
-                                line: lineNumber,
-                                action: REPLACE,
-                                duration: 0.5 * lineDuration, // seconds
-                            });
-
-                            codeLines.push({
-                                code: codeLine,
-                                line: lineNumber,
-                                action: REPLACE,
-                                duration: lineDuration, // seconds
-                            });
-
-                            continue;
-                        }
-                    } else if (mainAction === SKIP_TO) {
-                        /*
-                         * -2 because 1 to counter-down array starting with 0,
-                         * and 1 to get the line before and show the chosen line animation
-                         */
-                        lineNumber = Number.parseInt(line, 10) - lineOffset - 2;
-                    } else if (mainAction === MOVE_UP) {
-                        lineCount -= Number.parseInt(line, 10);
-                    } else if (mainAction === MOVE_DOWN) {
+                    case MOVE_DOWN: {
                         lineCount += Number.parseInt(line, 10);
-                    } else if (mainAction === WAIT) {
+                        continue;
+                    }
+
+                    case WAIT: {
                         extraWait = Number.parseInt(line, 10);
                         continue;
                     }
-                }
-            }
 
-            const whiteSpacesCount = codeLine.length - codeLine.trimStart().length;
-            let accCodeLine = ''.padStart(whiteSpacesCount, ' ');
-            const trimmedCode = codeLine.trimStart();
-
-            if (mainAction === SKIP_TO) {
-                linesToSkip = lineNumber;
-            } else if (![MOVE_DOWN, MOVE_UP].includes(mainAction)) {
-                codeLines.push({
-                    code: `${accCodeLine}|`,
-                    line: lineNumber,
-                    action: mainAction,
-                    duration: 0.4 * lineDuration, // seconds
-                });
-
-                codeLines.push({
-                    code: `${accCodeLine}|`,
-                    line: lineNumber,
-                    action: REPLACE,
-                    duration: 0.2 * lineDuration, // seconds
-                });
-
-                [...trimmedCode].forEach((letter, idx) => {
-                    accCodeLine += letter;
-                    const ext = idx + 1 === trimmedCode.length ? '' : '|';
-
-                    codeLines.push({
-                        code: accCodeLine + ext,
-                        line: lineNumber,
-                        action: REPLACE,
-                        duration: getRandomBetween(250, 100) / 1000 * typingSpeed, // seconds
-                    });
-                });
-
-                if (extraWait) {
-                    if (blinkTextBar) {
-                        const blinkTimes = Math.ceil((extraWait / blinkDuration) / 2);
-                        new Array(blinkTimes).fill(null).forEach(() => {
-                            codeLines.push({
-                                code: `${codeLine}|`,
-                                line: lineNumber,
-                                action: REPLACE,
-                                duration: blinkDuration, // seconds
-                            });
-
-                            codeLines.push({
-                                code: codeLine,
-                                line: lineNumber,
-                                action: REPLACE,
-                                duration: blinkDuration, // seconds
-                            });
-                        });
-                    } else {
-                        codeLines.push({
-                            code: codeLine,
-                            line: lineNumber,
-                            action: REPLACE,
-                            duration: extraWait, // seconds
-                        });
+                    case SKIP_TO: {
+                        lineNumber = Number.parseInt(line, 10) - lineOffset;
+                        break;
                     }
-
-                    extraWait = 0;
                 }
-
-                if (blinkTextBar) {
-                    codeLines.push({
-                        code: `${codeLine}|`,
-                        line: lineNumber,
-                        action: REPLACE,
-                        duration: blinkDuration, // seconds
-                    });
-
-                    codeLines.push({
-                        code: codeLine,
-                        line: lineNumber,
-                        action: REPLACE,
-                        duration: blinkDuration, // seconds
-                    });
-                }
-
-                debugArr.push({mainAction, lineCount, codeLine});
-                if (![WAIT, REPLACE].includes(mainAction)) {
-                    lineCount += 1;
-                }
+            } else {
+                // do not have command
+                console.log({ codeLine, lineNumber });
+                newCodeLines = getTypeInActionArray(
+                    codeLine,
+                    lineNumber,
+                    typingSpeed,
+                    ADD,
+                    lineDuration
+                );
             }
         } else {
-            // line breaks here
-            codeLines.push({
-                code: `${codeLine}|`,
-                line: lineNumber,
-                action: ADD,
-                duration: 0.2, // seconds
-            });
             codeLines.push({
                 code: codeLine,
                 line: lineNumber,
-                action: REPLACE,
-                duration: 0.2, // seconds
+                action: ADD,
+                duration: 1, // seconds
             });
-
-            if (extraWait) {
-                if (blinkTextBar) {
-                    const blinkTimes = Math.ceil((extraWait / blinkDuration) / 2);
-                    new Array(blinkTimes).fill(null).forEach(() => {
-                        codeLines.push({
-                            code: `${codeLine}|`,
-                            line: lineNumber,
-                            action: REPLACE,
-                            duration: blinkDuration, // seconds
-                        });
-
-                        codeLines.push({
-                            code: codeLine,
-                            line: lineNumber,
-                            action: REPLACE,
-                            duration: blinkDuration, // seconds
-                        });
-                    });
-                } else {
-                    codeLines.push({
-                        code: codeLine,
-                        line: lineNumber,
-                        action: REPLACE,
-                        duration: extraWait, // seconds
-                    });
-                }
-
-                extraWait = 0;
-            }
-
-            if (blinkTextBar) {
-                codeLines.push({
-                    code: `${codeLine}|`,
-                    line: lineNumber,
-                    action: REPLACE,
-                    duration: blinkDuration, // seconds
-                });
-                codeLines.push({
-                    code: codeLine,
-                    line: lineNumber,
-                    action: REPLACE,
-                    duration: blinkDuration, // seconds
-                });
-            }
-
-            if (![WAIT, REPLACE].includes(mainAction)) {
-                lineCount += 1;
-            }
         }
+
+        if (![REPLACE].includes(mainAction)) {
+            lineCount += 1;
+        }
+
+        codeLines = [
+            ...codeLines,
+            ...newCodeLines,
+        ];
     }
+
+    // console.log({codeLines, lines});
+
+    // return;
 
     // const html = generateHtml(code, lines.length, lines.length);
     // writeFileSync("./html/index.html", html);
@@ -451,7 +392,7 @@ const generateFiles = async (
 
             case REPLACE: {
                 const lineCode = codeToParse[line];
-                // if (!lineCode) console.log({ codeToParse, codeObj });
+                if (!lineCode) console.log({ codeToParse, codeObj, lineCode });
                 const whiteSpacesCount = lineCode.length - lineCode.trimStart().length;
                 const accCodeLine = ''.padStart(whiteSpacesCount, ' ');
 
