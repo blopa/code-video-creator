@@ -26,65 +26,6 @@ const {
     MOVE_DOWN,
 } = require('./constants');
 
-const createVideo = async (htmls, lineDuration) => {
-    const browser = await puppeteer.launch({
-        headless: true,
-        args: [`--window-size=${WIDTH},${HEIGHT}`],
-        defaultViewport: {
-            width: WIDTH,
-            height: HEIGHT,
-        },
-    });
-
-    const page = await browser.newPage();
-
-    const config = {
-        followNewTab: false,
-        fps: 25,
-        ffmpeg_Path: null,
-        videoFrame: {
-            width: WIDTH,
-            height: HEIGHT,
-        },
-        aspectRatio: '16:9',
-    };
-
-    const recorder = new PuppeteerScreenRecorder(page, config);
-    await recorder.start('./output.mp4');
-    await page.waitForTimeout(1000 * lineDuration);
-    console.log('start recording...');
-
-    let prevPosY = null;
-    for (const { html, posY, duration, line } of htmls) {
-        console.log(`rendering line ${line}`);
-        if (prevPosY !== posY) {
-            await page.waitForTimeout(0.18 * Math.abs(posY - prevPosY));
-        }
-
-        await page.setContent(html);
-
-        if (prevPosY !== posY) {
-            await page.evaluate((posY) => {
-                // 180ms per 1000px
-                window.scrollTo({
-                    top: posY,
-                    behavior: 'smooth',
-                });
-
-                // document.getElementsByTagName('html')[0].innerHTML = html;
-            }, posY);
-        }
-
-        await page.waitForTimeout(duration * 1000);
-        prevPosY = posY;
-    }
-
-    console.log('stop recording');
-    await recorder.stop();
-    console.log('close browser');
-    await browser.close();
-};
-
 const getExtraWaitActionArray = (
     codeLine,
     lineNumber,
@@ -217,7 +158,8 @@ const getReplaceActionArray = (
     lineDuration,
     paste,
     codeToReplace,
-    typingSpeed
+    typingSpeed,
+    blinkDuration
 ) => {
     let codeLines = [];
 
@@ -232,24 +174,30 @@ const getReplaceActionArray = (
 
         codeLines = [...codeLines, ...newCodeLines];
     } else {
-        const newCodeLines = getTypeOutActionArray(
+        codeLines = [
+            ...codeLines,
+            ...getBlinkingTextBarActionArray(
+                codeToReplace,
+                lineNumber,
+                lineDuration / 2, // extraWait
+                blinkDuration
+            ),
+        ];
+
+        let newCodeLines = getTypeOutActionArray(
             codeToReplace,
             lineNumber
         );
 
-        newCodeLines.push({
-            code: ' ',
-            line: lineNumber,
-            action: REPLACE,
-            duration: 0.5 * lineDuration, // seconds
-        });
-
-        newCodeLines.push({
-            code: codeLine,
-            line: lineNumber,
-            action: REPLACE,
-            duration: lineDuration, // seconds
-        });
+        newCodeLines = [
+            ...newCodeLines,
+            ...getBlinkingTextBarActionArray(
+                codeLine,
+                lineNumber,
+                lineDuration / 2, // extraWait
+                blinkDuration
+            ),
+        ];
 
         codeLines = [...codeLines, ...newCodeLines];
     }
@@ -350,7 +298,8 @@ const generateFiles = async (
                                 lineDuration,
                                 paste,
                                 codeToReplace,
-                                typingSpeed
+                                typingSpeed,
+                                blinkDuration
                             ),
                         ];
 
@@ -445,11 +394,6 @@ const generateFiles = async (
     )[0];
 
     console.log(`language is: ${language}`);
-
-    const htmls = [];
-    const codeToParse = [];
-    const basePosY = 7;
-    const scrollThreshold = (MAX_LINES / 2) + 1;
     // console.log(codeLines);
     // const map = {};
     // console.log(codeLines.filter((obj) => {
@@ -461,6 +405,39 @@ const generateFiles = async (
     //     return false;
     // }));
 
+    console.log('creating video...');
+    const browser = await puppeteer.launch({
+        headless: true,
+        args: [`--window-size=${WIDTH},${HEIGHT}`],
+        defaultViewport: {
+            width: WIDTH,
+            height: HEIGHT,
+        },
+    });
+
+    const page = await browser.newPage();
+
+    const config = {
+        followNewTab: false,
+        fps: 25,
+        ffmpeg_Path: null,
+        videoFrame: {
+            width: WIDTH,
+            height: HEIGHT,
+        },
+        aspectRatio: '16:9',
+    };
+
+    const recorder = new PuppeteerScreenRecorder(page, config);
+    await recorder.start('./output.mp4');
+    await page.waitForTimeout(1000 * lineDuration);
+    console.log('start recording...');
+
+    let prevPosY = null;
+    let prevLine = null;
+    const codeToParse = [];
+    const basePosY = 7;
+    const scrollThreshold = (MAX_LINES / 2) + 1;
     for (const codeObj of codeLines) {
         const {
             code,
@@ -508,7 +485,11 @@ const generateFiles = async (
             continue;
         }
 
-        console.log(`generating HTML for line ${line + 1}`);
+        if (prevLine !== line) {
+            prevLine = line;
+            console.log(`rendering line ${line}...`);
+        }
+
         const html = generateHtml(
             codeToParse.filter((s) => s !== null).join('\n'),
             line,
@@ -520,19 +501,32 @@ const generateFiles = async (
         const diff = line - scrollThreshold;
         const posY = Math.max((basePosY + (16 * diff)) * SCALE, 0);
 
-        htmls.push({
-            duration,
-            html,
-            posY,
-            line,
-        });
+        if (prevPosY !== posY) {
+            await page.waitForTimeout(0.25 * Math.abs(posY - prevPosY));
+        }
+
+        await page.setContent(html);
+
+        if (prevPosY !== posY) {
+            await page.evaluate((posY) => {
+                // 180ms per 1000px
+                window.scrollTo({
+                    top: posY,
+                    behavior: 'smooth',
+                });
+
+                // document.getElementsByTagName('html')[0].innerHTML = html;
+            }, posY);
+        }
+
+        await page.waitForTimeout(duration * 1000);
+        prevPosY = posY;
     }
 
-    console.log('creating video...');
-    await createVideo(
-        htmls,
-        lineDuration
-    );
+    console.log('stop recording');
+    await recorder.stop();
+    console.log('close browser');
+    await browser.close();
 };
 
 module.exports = generateFiles;
