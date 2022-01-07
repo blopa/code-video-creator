@@ -11,3 +11,4 @@ export const SELECT = 'SELECT';
 export const SKIP_TO = 'SKIP_TO';
 export const MOVE_UP = 'MOVE_UP';
 export const MOVE_DOWN = 'MOVE_DOWN';
+export const WAIT = 'WAIT';

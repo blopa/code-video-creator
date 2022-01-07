@@ -10,7 +10,7 @@ const {
     smallTabs = false,
     typingSpeed = 1,
     lineDuration = 1,
-    blinkTextBar = false,
+    blinkTextBar = true,
 } = params;
 
 if (

@@ -13,6 +13,7 @@ const { generateHtml, getRandomBetween } = require('./utils');
 
 const {
     ADD,
+    WAIT,
     WIDTH,
     SCALE,
     HEIGHT,
@@ -27,7 +28,7 @@ const {
 
 const createVideo = async (htmls, lineDuration) => {
     const browser = await puppeteer.launch({
-        headless: true,
+        headless: false,
         args: [`--window-size=${WIDTH},${HEIGHT}`],
         defaultViewport: {
             width: WIDTH,
@@ -89,7 +90,7 @@ const generateFiles = async (
         smallTabs = false,
         typingSpeed = 1,
         lineDuration = 1,
-        blinkTextBar = false,
+        blinkTextBar = true,
     } = {}
 ) => {
     const sourceCode = readFileSync(filePath, { encoding: 'utf8' });
@@ -123,6 +124,8 @@ const generateFiles = async (
     const codeLines = [];
     let lineCount = 0;
     let linesToSkip = 0;
+    let extraWait = 0;
+    const blinkDuration = 0.2;
     for (let i = 0; (i + lineOffset) < lines.length; i++) {
         let mainAction = ADD;
         let codeLine = lines[i + lineOffset];
@@ -154,7 +157,7 @@ const generateFiles = async (
                 ] = command.trim().split(',');
                 const newAction = action.toUpperCase();
 
-                if ([REPLACE, SKIP_TO, MOVE_UP, MOVE_DOWN].includes(newAction)) {
+                if ([WAIT, REPLACE, SKIP_TO, MOVE_UP, MOVE_DOWN].includes(newAction)) {
                     mainAction = newAction;
 
                     if (mainAction === REPLACE) {
@@ -233,6 +236,9 @@ const generateFiles = async (
                         lineCount -= Number.parseInt(line, 10);
                     } else if (mainAction === MOVE_DOWN) {
                         lineCount += Number.parseInt(line, 10);
+                    } else if (mainAction === WAIT) {
+                        extraWait = Number.parseInt(line, 10);
+                        continue;
                     }
                 }
             }
@@ -270,23 +276,54 @@ const generateFiles = async (
                     });
                 });
 
+                if (extraWait) {
+                    if (blinkTextBar) {
+                        const blinkTimes = Math.ceil((extraWait / blinkDuration) / 2);
+                        new Array(blinkTimes).fill(null).forEach(() => {
+                            codeLines.push({
+                                code: `${codeLine}|`,
+                                line: lineNumber,
+                                action: REPLACE,
+                                duration: blinkDuration, // seconds
+                            });
+
+                            codeLines.push({
+                                code: codeLine,
+                                line: lineNumber,
+                                action: REPLACE,
+                                duration: blinkDuration, // seconds
+                            });
+                        });
+                    } else {
+                        codeLines.push({
+                            code: codeLine,
+                            line: lineNumber,
+                            action: REPLACE,
+                            duration: extraWait, // seconds
+                        });
+                    }
+
+                    extraWait = 0;
+                }
+
                 if (blinkTextBar) {
                     codeLines.push({
                         code: `${codeLine}|`,
                         line: lineNumber,
                         action: REPLACE,
-                        duration: 0.2, // seconds
+                        duration: blinkDuration, // seconds
                     });
 
                     codeLines.push({
                         code: codeLine,
                         line: lineNumber,
                         action: REPLACE,
-                        duration: 0.2, // seconds
+                        duration: blinkDuration, // seconds
                     });
                 }
 
-                if (![REPLACE].includes(mainAction)) {
+                debugArr.push({mainAction, lineCount, codeLine});
+                if (![WAIT, REPLACE].includes(mainAction)) {
                     lineCount += 1;
                 }
             }
@@ -305,22 +342,52 @@ const generateFiles = async (
                 duration: 0.2, // seconds
             });
 
+            if (extraWait) {
+                if (blinkTextBar) {
+                    const blinkTimes = Math.ceil((extraWait / blinkDuration) / 2);
+                    new Array(blinkTimes).fill(null).forEach(() => {
+                        codeLines.push({
+                            code: `${codeLine}|`,
+                            line: lineNumber,
+                            action: REPLACE,
+                            duration: blinkDuration, // seconds
+                        });
+
+                        codeLines.push({
+                            code: codeLine,
+                            line: lineNumber,
+                            action: REPLACE,
+                            duration: blinkDuration, // seconds
+                        });
+                    });
+                } else {
+                    codeLines.push({
+                        code: codeLine,
+                        line: lineNumber,
+                        action: REPLACE,
+                        duration: extraWait, // seconds
+                    });
+                }
+
+                extraWait = 0;
+            }
+
             if (blinkTextBar) {
                 codeLines.push({
                     code: `${codeLine}|`,
                     line: lineNumber,
                     action: REPLACE,
-                    duration: 0.2, // seconds
+                    duration: blinkDuration, // seconds
                 });
                 codeLines.push({
                     code: codeLine,
                     line: lineNumber,
                     action: REPLACE,
-                    duration: 0.2, // seconds
+                    duration: blinkDuration, // seconds
                 });
             }
 
-            if (![REPLACE].includes(mainAction)) {
+            if (![WAIT, REPLACE].includes(mainAction)) {
                 lineCount += 1;
             }
         }
