@@ -85,8 +85,65 @@ const createVideo = async (htmls, lineDuration) => {
     await browser.close();
 };
 
-const getBlinkingTextBarActionArray = () => {
-    // TODO
+const getExtraWaitActionArray = (
+    extraWait,
+    blinkTextBar,
+    blinkDuration,
+    codeLine,
+    lineNumber
+) => {
+    let codeLines = [];
+
+    if (extraWait) {
+        if (blinkTextBar) {
+            codeLines = [
+                ...codeLines,
+                ...getBlinkingTextBarActionArray(
+                    extraWait,
+                    blinkDuration,
+                    codeLine,
+                    lineNumber
+                ),
+            ];
+        } else {
+            codeLines.push({
+                code: codeLine,
+                line: lineNumber,
+                action: REPLACE,
+                duration: extraWait, // seconds
+            });
+        }
+    }
+
+    return codeLines;
+};
+
+const getBlinkingTextBarActionArray = (
+    extraWait,
+    blinkDuration,
+    codeLine,
+    lineNumber,
+) => {
+    const codeLines = [];
+
+    const blinkTimes = Math.ceil((extraWait / blinkDuration) / 2);
+    new Array(blinkTimes).fill(null).forEach(() => {
+        codeLines.push({
+            code: `${codeLine}|`,
+            line: lineNumber,
+            action: REPLACE,
+            duration: blinkDuration, // seconds
+        });
+
+        codeLines.push({
+            code: codeLine,
+            line: lineNumber,
+            action: REPLACE,
+            duration: blinkDuration, // seconds
+        });
+    });
+
+    return codeLines;
 };
 
 const getTypeInActionArray = (
@@ -313,6 +370,7 @@ const generateFiles = async (
                     }
 
                     case WAIT: {
+                        i -= 1;
                         extraWait = Number.parseInt(line, 10);
                         continue;
                     }
@@ -334,6 +392,13 @@ const generateFiles = async (
                         ADD,
                         lineDuration
                     ),
+                    ...getExtraWaitActionArray(
+                        extraWait,
+                        blinkTextBar,
+                        blinkDuration,
+                        codeLine,
+                        lineNumber
+                    ),
                 ];
             }
         } else {
@@ -351,14 +416,19 @@ const generateFiles = async (
                 duration: 0.2, // seconds
             });
 
-            // if (extraWait) {
-            //     codeLines = [
-            //         ...codeLines,
-            //         ...getBlinkingTextBarActionArray(),
-            //     ];
-            // }
+            codeLines = [
+                ...codeLines,
+                ...getExtraWaitActionArray(
+                    extraWait,
+                    blinkTextBar,
+                    blinkDuration,
+                    codeLine,
+                    lineNumber
+                ),
+            ];
         }
 
+        extraWait = 0;
         if (![REPLACE].includes(mainAction)) {
             lineCount += 1;
         }

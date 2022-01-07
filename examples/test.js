@@ -10,7 +10,7 @@ log('1');
 log(2);
 
 
-
+//# wait,10
 const func = () => {
 };
 //# move_up,1
