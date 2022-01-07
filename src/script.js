@@ -196,9 +196,6 @@ const getReplaceActionArray = (
                 lineDuration / 2, // extraWait
                 blinkDuration
             ),
-        ];
-
-        let newCodeLines = [
             ...getTypeOutActionArray(
                 codeToReplace,
                 lineNumber
@@ -216,8 +213,6 @@ const getReplaceActionArray = (
                 blinkDuration
             ),
         ];
-
-        codeLines = [...codeLines, ...newCodeLines];
     }
 
     return codeLines;
