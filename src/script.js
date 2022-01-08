@@ -457,7 +457,7 @@ const generateFiles = async (
     let prevLine = null;
     const codeToParse = [];
     const basePosY = 7;
-    const scrollThreshold = Math.round((MAX_LINES / SCALE) / 2) + 1;
+    const scrollThreshold = Math.round((MAX_LINES / scale) / 2) + 1;
     for (const codeObj of codeLines) {
         const {
             code,
@@ -520,7 +520,7 @@ const generateFiles = async (
 
         writeFileSync(path.resolve(__dirname, '..', 'html', `index-${line}.html`), html);
         const diff = line - scrollThreshold;
-        const posY = Math.max((basePosY + (19 * diff)) * SCALE, 0);
+        const posY = Math.max((basePosY + (19 * diff)) * scale, 0);
 
         if (prevPosY !== posY) {
             await page.waitForTimeout(0.25 * Math.abs(posY - prevPosY));
