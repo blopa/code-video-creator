@@ -13,7 +13,7 @@ const babelConfig = require('../babel.config');
 const { code } = transformFileSync(
     path.resolve(__dirname, 'CodeHighlighter.jsx'), {
         ...babelConfig,
-        root: path.resolve(__dirname)
+        root: path.resolve(__dirname, '..')
     }
 );
 const { default: CodeHighlighter } = requireFromString(code);
