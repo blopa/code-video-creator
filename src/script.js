@@ -223,6 +223,7 @@ const generateFiles = async (
         typingSpeed = 1,
         lineSpeed = 1,
         blinkTextBar = true,
+        scale = SCALE,
     } = {}
 ) => {
     const sourceCode = readFileSync(filePath, { encoding: 'utf8' });
@@ -426,7 +427,7 @@ const generateFiles = async (
 
     console.log('creating video...');
     const browser = await puppeteer.launch({
-        headless: false,
+        headless: true,
         args: [`--window-size=${WIDTH},${HEIGHT}`],
         defaultViewport: {
             width: WIDTH,
@@ -513,7 +514,8 @@ const generateFiles = async (
             codeToParse.filter((s) => s !== null).join('\n'),
             line,
             lines.length + scrollThreshold,
-            language
+            language,
+            scale
         );
 
         writeFileSync(path.resolve(__dirname, '..', 'html', `index-${line}.html`), html);

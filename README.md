@@ -18,7 +18,7 @@ Where "test.js" should be the path to your file. A file called "output.mp4" will
 
 ## Options
 ```shell
-npm run code-video-creator test.js --smallTabs true --blinkTextBar true --typingSpeed 1 --lineSpeed 1
+npm run code-video-creator test.js --smallTabs true --blinkTextBar true --typingSpeed 1 --lineSpeed 1 --scale 4
 ```
 
 ## Development

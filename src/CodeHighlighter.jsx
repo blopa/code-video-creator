@@ -1,9 +1,10 @@
 import React from 'react';
-import { HEIGHT, WIDTH, SCALE, FONT_SIZE } from './constants';
+import { HEIGHT, WIDTH, FONT_SIZE } from './constants';
 
 const fontFamily = "Consolas,Monaco,'Andale Mono','Ubuntu Mono',monospace";
 
 function CodeHighlighter({
+    scale,
     codeHtml,
     totalLines,
     currentLine,
@@ -35,10 +36,10 @@ function CodeHighlighter({
             />
             <body
                 style={{
-                    width: `${WIDTH / SCALE}px`,
-                    height: `${HEIGHT / SCALE}px`,
+                    width: `${WIDTH / scale}px`,
+                    height: `${HEIGHT / scale}px`,
                     background: '#272822',
-                    transform: `scale(${SCALE})`,
+                    transform: `scale(${scale})`,
                     transformOrigin: '0% 0% 0px',
                     margin: 0,
                     color: 'white',
@@ -50,7 +51,7 @@ function CodeHighlighter({
                     style={{
                         // background: '#272822',
                         display: 'flex',
-                        margin: `${5 * SCALE}px 0 0 2px`,
+                        margin: `${5 * scale}px 0 0 2px`,
                     }}
                 >
                     <div
@@ -60,7 +61,7 @@ function CodeHighlighter({
                             height: `${FONT_SIZE}px`,
                             backgroundColor: '#44463a',
                             zIndex: -1,
-                            marginTop: `${currentLine * FONT_SIZE}px`,
+                            marginTop: `${(currentLine * FONT_SIZE) + 1}px`,
                         }}
                     />
                     <div

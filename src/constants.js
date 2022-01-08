@@ -2,7 +2,7 @@ module.exports = {
     WIDTH: Math.floor(1920),
     // HEIGHT: Math.floor(1058 / 4),
     HEIGHT: Math.floor(1080),
-    SCALE: 1,
+    SCALE: 4,
     MAX_LINES: 65,
     FONT_SIZE: 16,
     ADD: 'ADD',
