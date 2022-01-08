@@ -1,5 +1,4 @@
-require('@babel/register');
-
+const path = require('path');
 const React = require('react');
 const { renderToStaticMarkup } = require ('react-dom/server');
 const { JSDOM } = require('jsdom');
@@ -10,11 +9,11 @@ const { transformFileSync } = require('@babel/core');
 const { requireFromString } = require('module-from-string');
 
 // React component
-const { code } = transformFileSync('./src/CodeHighlighter.jsx');
+const { code } = transformFileSync(path.resolve(__dirname, 'CodeHighlighter.jsx'));
 const { default: CodeHighlighter } = requireFromString(code);
 
 const styling = readFileSync(
-    './node_modules/prism-themes/themes/prism-material-dark.css',
+    path.resolve(__dirname, '..', 'node_modules', 'prism-themes', 'themes', 'prism-material-dark.css'),
     { encoding: 'utf8' }
 );
 
