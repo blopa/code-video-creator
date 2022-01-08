@@ -7,9 +7,15 @@ const loadLanguages = require('prismjs/components/');
 const Prism = require('prismjs');
 const { transformFileSync } = require('@babel/core');
 const { requireFromString } = require('module-from-string');
+const babelConfig = require('../babel.config');
 
 // React component
-const { code } = transformFileSync(path.resolve(__dirname, 'CodeHighlighter.jsx'));
+const { code } = transformFileSync(
+    path.resolve(__dirname, 'CodeHighlighter.jsx'), {
+        ...babelConfig,
+        root: path.resolve(__dirname)
+    }
+);
 const { default: CodeHighlighter } = requireFromString(code);
 
 const styling = readFileSync(
