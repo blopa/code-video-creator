@@ -1,5 +1,3 @@
-require('@babel/register');
-
 const puppeteer = require('puppeteer');
 // const prettier = require('prettier');
 const { PuppeteerScreenRecorder } = require('puppeteer-screen-recorder');
@@ -93,7 +91,7 @@ const getTypeInActionArray = (
     lineNumber,
     typingSpeed,
     mainAction,
-    lineDuration
+    lineSpeed
 ) => {
     let codeLines = [];
 
@@ -105,14 +103,14 @@ const getTypeInActionArray = (
         code: `${accCodeLine}|`,
         line: lineNumber,
         action: mainAction,
-        duration: 0.4 * lineDuration, // seconds
+        duration: 0.4 * lineSpeed, // seconds
     });
 
     codeLines.push({
         code: `${accCodeLine}`,
         line: lineNumber,
         action: REPLACE,
-        duration: 0.2 * lineDuration, // seconds
+        duration: 0.2 * lineSpeed, // seconds
     });
 
     [...trimmedCode].forEach((letter, idx) => {
@@ -123,7 +121,7 @@ const getTypeInActionArray = (
             code: accCodeLine + ext,
             line: lineNumber,
             action: REPLACE,
-            duration: (getRandomBetween(300, 80) / 1000) * typingSpeed * lineDuration, // seconds
+            duration: (getRandomBetween(300, 80) / 1000) * typingSpeed * lineSpeed, // seconds
         });
     });
 
@@ -156,7 +154,7 @@ const getTypeOutActionArray = (
 const getReplaceActionArray = (
     codeLine,
     lineNumber,
-    lineDuration,
+    lineSpeed,
     paste,
     codeToReplace,
     typingSpeed,
@@ -170,13 +168,13 @@ const getReplaceActionArray = (
             ...getBlinkingTextBarActionArray(
                 codeToReplace,
                 lineNumber,
-                lineDuration / 2, // extraWait
+                lineSpeed / 2, // extraWait
                 blinkDuration
             ),
             ...getBlinkingTextBarActionArray(
                 '',
                 lineNumber,
-                lineDuration / 2, // extraWait
+                lineSpeed / 2, // extraWait
                 blinkDuration
             ),
             ...getTypeInActionArray(
@@ -184,7 +182,7 @@ const getReplaceActionArray = (
                 lineNumber,
                 typingSpeed,
                 REPLACE,
-                lineDuration
+                lineSpeed
             ),
         ];
     } else {
@@ -193,7 +191,7 @@ const getReplaceActionArray = (
             ...getBlinkingTextBarActionArray(
                 codeToReplace,
                 lineNumber,
-                lineDuration / 2, // extraWait
+                lineSpeed / 2, // extraWait
                 blinkDuration
             ),
             ...getTypeOutActionArray(
@@ -203,13 +201,13 @@ const getReplaceActionArray = (
             ...getBlinkingTextBarActionArray(
                 '',
                 lineNumber,
-                lineDuration / 2, // extraWait
+                lineSpeed / 2, // extraWait
                 blinkDuration
             ),
             ...getBlinkingTextBarActionArray(
                 codeLine,
                 lineNumber,
-                lineDuration / 2, // extraWait
+                lineSpeed / 2, // extraWait
                 blinkDuration
             ),
         ];
@@ -222,7 +220,7 @@ const generateFiles = async (
     filePath, {
         smallTabs = false,
         typingSpeed = 1,
-        lineDuration = 1,
+        lineSpeed = 1,
         blinkTextBar = true,
     } = {}
 ) => {
@@ -309,7 +307,7 @@ const generateFiles = async (
                             ...getReplaceActionArray(
                                 codeLine,
                                 lineNumber,
-                                lineDuration * lineDurMplier,
+                                lineSpeed * lineDurMplier,
                                 paste,
                                 codeToReplace,
                                 typingSpeed,
@@ -354,7 +352,7 @@ const generateFiles = async (
                         lineNumber,
                         typingSpeed,
                         ADD,
-                        lineDuration * lineDurMplier
+                        lineSpeed * lineDurMplier
                     ),
                     ...getExtraWaitActionArray(
                         codeLine,
@@ -450,7 +448,7 @@ const generateFiles = async (
 
     const recorder = new PuppeteerScreenRecorder(page, config);
     await recorder.start('./output.mp4');
-    await page.waitForTimeout(1000 * lineDuration);
+    await page.waitForTimeout(1000 * lineSpeed);
     console.log('start recording...');
 
     let prevPosY = null;
@@ -501,13 +499,13 @@ const generateFiles = async (
             }
         }
 
-        if (skip) {
-            continue;
-        }
-
         if (prevLine !== line) {
             prevLine = line;
-            console.log(`rendering line ${line}...`);
+            console.log(`rendering line ${line + 1}...`);
+        }
+
+        if (skip) {
+            continue;
         }
 
         const html = generateHtml(

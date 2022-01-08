@@ -1,20 +1,24 @@
 require('@babel/register');
 
-import React from 'react';
-import { renderToStaticMarkup } from 'react-dom/server';
-import { JSDOM } from 'jsdom';
-import { readFileSync } from 'fs';
-import loadLanguages from 'prismjs/components/';
-import Prism from 'prismjs';
+const React = require('react');
+const { renderToStaticMarkup } = require ('react-dom/server');
+const { JSDOM } = require('jsdom');
+const { readFileSync } = require('fs');
+const loadLanguages = require('prismjs/components/');
+const Prism = require('prismjs');
+const { transformFileSync } = require('@babel/core');
+const { requireFromString } = require('module-from-string');
 
-import CodeHighlighter from './CodeHighlighter.jsx';
+// React component
+const { code } = transformFileSync('./src/CodeHighlighter.jsx');
+const { default: CodeHighlighter } = requireFromString(code);
 
 const styling = readFileSync(
     './node_modules/prism-themes/themes/prism-material-dark.css',
     { encoding: 'utf8' }
 );
 
-export const generateHtml = (
+const generateHtml = (
     code,
     currentLine,
     totalLines,
@@ -28,13 +32,12 @@ export const generateHtml = (
     );
 
     // console.log({code});
-    const html = renderToStaticMarkup((
-        <CodeHighlighter
-            codeHtml={codeHtml}
-            totalLines={totalLines}
-            currentLine={currentLine}
-        />
-    ));
+    const reactElement = React.createElement(CodeHighlighter, {
+        codeHtml,
+        totalLines,
+        currentLine,
+    }, null);
+    const html = renderToStaticMarkup(reactElement);
 
     const { window } = new JSDOM(html);
     const { document } = window;
@@ -46,5 +49,10 @@ export const generateHtml = (
     return document.getElementsByTagName('html')[0].outerHTML;
 };
 
-export const getRandomBetween = (max, min) =>
+const getRandomBetween = (max, min) =>
     Math.floor(Math.random() * (max - min + 1)) + min;
+
+module.exports = {
+    generateHtml,
+    getRandomBetween,
+};

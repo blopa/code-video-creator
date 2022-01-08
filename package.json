@@ -2,9 +2,6 @@
   "name": "code-video-creator",
   "version": "0.2.5",
   "private": false,
-  "devDependencies": {
-    "npm-check-updates": "^12.1.0"
-  },
   "scripts": {
     "generate": "node src/cli.js",
     "bump": "ncu -u -t minor"
@@ -21,16 +18,21 @@
       "last 1 safari version"
     ]
   },
+  "devDependencies": {
+    "npm-check-updates": "^12.1.0"
+  },
   "dependencies": {
     "@babel/core": "^7.16.7",
     "@babel/generator": "^7.16.7",
     "@babel/parser": "^7.16.7",
     "@babel/plugin-syntax-jsx": "^7.16.7",
+    "@babel/preset-env": "^7.16.7",
     "@babel/preset-react": "^7.16.7",
     "@babel/register": "^7.16.7",
     "esm": "^3.2.25",
     "jsdom": "^19.0.0",
     "minimist": "^1.2.5",
+    "module-from-string": "^3.1.4",
     "prism-themes": "^1.9.0",
     "prismjs": "^1.26.0",
     "puppeteer": "^13.0.1",

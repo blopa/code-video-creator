@@ -27,7 +27,7 @@ Where "test.js" should be the path to your file.
 
 ## Options
 ```shell
-npm run generate test.js --smallTabs true --blinkTextBar true --typingSpeed 1 --lineDuration 1
+npm run generate test.js --smallTabs true --blinkTextBar true --typingSpeed 1 --lineSpeed 1
 ```
 
 ## Disclaimer
