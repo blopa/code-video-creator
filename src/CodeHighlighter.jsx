@@ -61,7 +61,7 @@ function CodeHighlighter({
                             height: `${FONT_SIZE}px`,
                             backgroundColor: '#44463a',
                             zIndex: -1,
-                            marginTop: `${(currentLine * FONT_SIZE) + 1}px`,
+                            marginTop: `${currentLine * FONT_SIZE}px`,
                         }}
                     />
                     <div
