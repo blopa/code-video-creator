@@ -23,7 +23,7 @@ const {
     REPLACE,
     MAX_LINES,
     MOVE_DOWN,
-    LINE_DURATION,
+    LINE_DURATION, FONT_SIZE,
 } = require('./constants');
 
 const getExtraWaitActionArray = (
@@ -520,7 +520,7 @@ const generateFiles = async (
 
         // writeFileSync(path.resolve(__dirname, '..', 'html', `index-${line}.html`), html);
         const diff = line - scrollThreshold;
-        const posY = Math.max((basePosY + (19 * diff)) * scale, 0);
+        const posY = Math.max((basePosY + (FONT_SIZE * diff)) * scale, 0);
 
         if (prevPosY !== posY) {
             await page.waitForTimeout(0.25 * Math.abs(posY - prevPosY));
