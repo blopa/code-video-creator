@@ -21,9 +21,10 @@ const {
     SKIP_TO,
     MOVE_UP,
     REPLACE,
+    FONT_SIZE,
     MAX_LINES,
     MOVE_DOWN,
-    LINE_DURATION, FONT_SIZE,
+    LINE_DURATION,
 } = require('./constants');
 
 const getExtraWaitActionArray = (
