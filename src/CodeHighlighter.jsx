@@ -43,13 +43,14 @@ function CodeHighlighter({
                     margin: 0,
                     color: 'white',
                     fontSize: `${FONT_SIZE}px`,
+                    lineHeight: '1em',
                 }}
             >
                 <div
                     style={{
                         // background: '#272822',
                         display: 'flex',
-                        margin: '20px 0 0 2px',
+                        margin: `${5 * SCALE}px 0 0 2px`,
                     }}
                 >
                     <div

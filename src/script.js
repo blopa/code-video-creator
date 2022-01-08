@@ -456,7 +456,7 @@ const generateFiles = async (
     let prevLine = null;
     const codeToParse = [];
     const basePosY = 7;
-    const scrollThreshold = Math.ceil((MAX_LINES / SCALE) / 2) + 1;
+    const scrollThreshold = Math.round((MAX_LINES / SCALE) / 2) + 1;
     for (const codeObj of codeLines) {
         const {
             code,
