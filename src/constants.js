@@ -2,9 +2,9 @@ module.exports = {
     WIDTH: Math.floor(1920),
     // HEIGHT: Math.floor(1058 / 4),
     HEIGHT: Math.floor(1080),
-    SCALE: 4,
-    MAX_LINES: 16,
-
+    SCALE: 3,
+    MAX_LINES: 4,
+    FONT_SIZE: 19,
     ADD: 'ADD',
     REMOVE: 'REMOVE',
     REPLACE: 'REPLACE',

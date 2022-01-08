@@ -426,7 +426,7 @@ const generateFiles = async (
 
     console.log('creating video...');
     const browser = await puppeteer.launch({
-        headless: true,
+        headless: false,
         args: [`--window-size=${WIDTH},${HEIGHT}`],
         defaultViewport: {
             width: WIDTH,
@@ -456,7 +456,7 @@ const generateFiles = async (
     let prevLine = null;
     const codeToParse = [];
     const basePosY = 7;
-    const scrollThreshold = (MAX_LINES / 2) + 1;
+    const scrollThreshold = ((MAX_LINES * SCALE) / 2) + 1;
     for (const codeObj of codeLines) {
         const {
             code,

@@ -1,5 +1,5 @@
 import React from 'react';
-import { HEIGHT, WIDTH, SCALE } from './constants';
+import { HEIGHT, WIDTH, SCALE, FONT_SIZE } from './constants';
 
 const fontFamily = "Consolas,Monaco,'Andale Mono','Ubuntu Mono',monospace";
 
@@ -13,7 +13,7 @@ function CodeHighlighter({
             key={index}
             className="token string"
             style={{
-                // height: '19px',
+                // height: `${FONT_SIZE}px`,
                 width: `${8 * (totalLines).toString().length}px`,
             }}
         >
@@ -26,11 +26,8 @@ function CodeHighlighter({
             <style
                 dangerouslySetInnerHTML={{
                     __html: `
-                    body {
-                        color: white;
-                    }
                     code > span {
-                        //line-height: 19px;
+                        //line-height: ${FONT_SIZE}px;
                         //display: inline-block;
                     }
                 `,
@@ -44,6 +41,8 @@ function CodeHighlighter({
                     transform: `scale(${SCALE})`,
                     transformOrigin: '0% 0% 0px',
                     margin: 0,
+                    color: 'white',
+                    fontSize: `${FONT_SIZE}px`,
                 }}
             >
                 <div
@@ -57,10 +56,10 @@ function CodeHighlighter({
                         style={{
                             width: '100%',
                             position: 'absolute',
-                            height: `${19}px`,
+                            height: `${FONT_SIZE}px`,
                             backgroundColor: '#44463a',
                             zIndex: -1,
-                            marginTop: `${currentLine * 19}px`,
+                            marginTop: `${currentLine * FONT_SIZE}px`,
                         }}
                     />
                     <div
