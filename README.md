@@ -41,6 +41,6 @@ Add your language and extensions to the file `languages.json` so they can be aut
 ## Disclaimer
 This is 100% NOT production ready and the code is not optimized at all.
 
-Maybe I will make it better in the future ¯\_(ツ)_/¯
+Maybe I will make it better in the future ¯\\\_(ツ)_/¯
 
 You need to have `ffmpeg` installed for this to work!
