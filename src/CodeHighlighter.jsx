@@ -1,7 +1,10 @@
 import React from 'react';
-import { HEIGHT, WIDTH, SCALE } from './constants';
+import { HEIGHT, WIDTH, FONT_SIZE } from './constants';
+
+const fontFamily = "Consolas,Monaco,'Andale Mono','Ubuntu Mono',monospace";
 
 function CodeHighlighter({
+    scale,
     codeHtml,
     totalLines,
     currentLine,
@@ -9,8 +12,9 @@ function CodeHighlighter({
     const lines = new Array(totalLines).fill(null).map((v, index) => ((
         <span
             key={index}
+            className="token string"
             style={{
-                height: '16px',
+                // height: `${FONT_SIZE}px`,
                 width: `${8 * (totalLines).toString().length}px`,
             }}
         >
@@ -23,39 +27,46 @@ function CodeHighlighter({
             <style
                 dangerouslySetInnerHTML={{
                     __html: `
-                    body { color: white; }
+                    code > span {
+                        //line-height: ${FONT_SIZE}px;
+                        //display: inline-block;
+                    }
                 `,
                 }}
             />
             <body
                 style={{
-                    width: `${WIDTH / SCALE}px`,
-                    height: `${HEIGHT / SCALE}px`,
+                    width: `${WIDTH / scale}px`,
+                    height: `${HEIGHT / scale}px`,
                     background: '#272822',
-                    transform: `scale(${SCALE})`,
+                    transform: `scale(${scale})`,
                     transformOrigin: '0% 0% 0px',
                     margin: 0,
+                    color: 'white',
+                    fontSize: `${FONT_SIZE}px`,
+                    lineHeight: '1em',
                 }}
             >
                 <div
                     style={{
                         // background: '#272822',
                         display: 'flex',
-                        margin: '20px 0 0 2px',
+                        margin: `${5 * scale}px 0 0 2px`,
                     }}
                 >
                     <div
                         style={{
                             width: '100%',
                             position: 'absolute',
-                            height: `${4 * SCALE}px`,
+                            height: `${FONT_SIZE}px`,
                             backgroundColor: '#44463a',
                             zIndex: -1,
-                            marginTop: `${currentLine * 16}px`,
+                            marginTop: `${currentLine * FONT_SIZE}px`,
                         }}
                     />
                     <div
                         style={{
+                            fontFamily,
                             display: 'grid',
                             margin: '0 5px 0 2px',
                             color: '#DD6',
@@ -70,7 +81,7 @@ function CodeHighlighter({
                     >
                         <code
                             style={{
-                                fontFamily: "Consolas,Monaco,'Andale Mono','Ubuntu Mono',monospace",
+                                fontFamily,
                             }}
                             dangerouslySetInnerHTML={{
                                 __html: codeHtml,

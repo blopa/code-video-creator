@@ -3,8 +3,8 @@ module.exports = {
     // HEIGHT: Math.floor(1058 / 4),
     HEIGHT: Math.floor(1080),
     SCALE: 4,
-    MAX_LINES: 16,
-
+    MAX_LINES: 65,
+    FONT_SIZE: 16,
     ADD: 'ADD',
     REMOVE: 'REMOVE',
     REPLACE: 'REPLACE',

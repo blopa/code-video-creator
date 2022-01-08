@@ -1,5 +1,6 @@
 const puppeteer = require('puppeteer');
 // const prettier = require('prettier');
+const path = require("path");
 const { PuppeteerScreenRecorder } = require('puppeteer-screen-recorder');
 const {
     readFileSync,
@@ -20,6 +21,7 @@ const {
     SKIP_TO,
     MOVE_UP,
     REPLACE,
+    FONT_SIZE,
     MAX_LINES,
     MOVE_DOWN,
     LINE_DURATION,
@@ -222,6 +224,7 @@ const generateFiles = async (
         typingSpeed = 1,
         lineSpeed = 1,
         blinkTextBar = true,
+        scale = SCALE,
     } = {}
 ) => {
     const sourceCode = readFileSync(filePath, { encoding: 'utf8' });
@@ -455,7 +458,7 @@ const generateFiles = async (
     let prevLine = null;
     const codeToParse = [];
     const basePosY = 7;
-    const scrollThreshold = (MAX_LINES / 2) + 1;
+    const scrollThreshold = Math.round((MAX_LINES / scale) / 2) + 1;
     for (const codeObj of codeLines) {
         const {
             code,
@@ -512,12 +515,13 @@ const generateFiles = async (
             codeToParse.filter((s) => s !== null).join('\n'),
             line,
             lines.length + scrollThreshold,
-            language
+            language,
+            scale
         );
 
-        // writeFileSync(`./html/index-${line}.html`, html);
+        // writeFileSync(path.resolve(__dirname, '..', 'html', `index-${line}.html`), html);
         const diff = line - scrollThreshold;
-        const posY = Math.max((basePosY + (16 * diff)) * SCALE, 0);
+        const posY = Math.max((basePosY + (FONT_SIZE * diff)) * scale, 0);
 
         if (prevPosY !== posY) {
             await page.waitForTimeout(0.25 * Math.abs(posY - prevPosY));
