@@ -1,6 +1,8 @@
 import React from 'react';
 import { HEIGHT, WIDTH, SCALE } from './constants';
 
+const fontFamily = "Consolas,Monaco,'Andale Mono','Ubuntu Mono',monospace";
+
 function CodeHighlighter({
     codeHtml,
     totalLines,
@@ -9,8 +11,9 @@ function CodeHighlighter({
     const lines = new Array(totalLines).fill(null).map((v, index) => ((
         <span
             key={index}
+            className="token string"
             style={{
-                height: '16px',
+                // height: '19px',
                 width: `${8 * (totalLines).toString().length}px`,
             }}
         >
@@ -23,7 +26,13 @@ function CodeHighlighter({
             <style
                 dangerouslySetInnerHTML={{
                     __html: `
-                    body { color: white; }
+                    body {
+                        color: white;
+                    }
+                    code > span {
+                        //line-height: 19px;
+                        //display: inline-block;
+                    }
                 `,
                 }}
             />
@@ -48,14 +57,15 @@ function CodeHighlighter({
                         style={{
                             width: '100%',
                             position: 'absolute',
-                            height: `${4 * SCALE}px`,
+                            height: `${19}px`,
                             backgroundColor: '#44463a',
                             zIndex: -1,
-                            marginTop: `${currentLine * 16}px`,
+                            marginTop: `${currentLine * 19}px`,
                         }}
                     />
                     <div
                         style={{
+                            fontFamily,
                             display: 'grid',
                             margin: '0 5px 0 2px',
                             color: '#DD6',
@@ -70,7 +80,7 @@ function CodeHighlighter({
                     >
                         <code
                             style={{
-                                fontFamily: "Consolas,Monaco,'Andale Mono','Ubuntu Mono',monospace",
+                                fontFamily,
                             }}
                             dangerouslySetInnerHTML={{
                                 __html: codeHtml,

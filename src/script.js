@@ -1,9 +1,10 @@
 const puppeteer = require('puppeteer');
 // const prettier = require('prettier');
+const path = require("path");
 const { PuppeteerScreenRecorder } = require('puppeteer-screen-recorder');
 const {
     readFileSync,
-    // writeFileSync,
+    writeFileSync,
     // mkdirSync,
     // rmdirSync,
 } = require('fs');
@@ -515,9 +516,9 @@ const generateFiles = async (
             language
         );
 
-        // writeFileSync(`./html/index-${line}.html`, html);
+        writeFileSync(path.resolve(__dirname, '..', 'html', `index-${line}.html`), html);
         const diff = line - scrollThreshold;
-        const posY = Math.max((basePosY + (16 * diff)) * SCALE, 0);
+        const posY = Math.max((basePosY + (19 * diff)) * SCALE, 0);
 
         if (prevPosY !== posY) {
             await page.waitForTimeout(0.25 * Math.abs(posY - prevPosY));
