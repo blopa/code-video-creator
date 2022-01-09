@@ -4,7 +4,7 @@ const path = require("path");
 const { PuppeteerScreenRecorder } = require('puppeteer-screen-recorder');
 const {
     readFileSync,
-    writeFileSync,
+    // writeFileSync,
     // mkdirSync,
     // rmdirSync,
 } = require('fs');
@@ -522,7 +522,7 @@ const generateFiles = async (
             showFileName ? fileName : null
         );
 
-        writeFileSync(path.resolve(__dirname, '..', 'html', `index-${line}.html`), html);
+        // writeFileSync(path.resolve(__dirname, '..', 'html', `index-${line}.html`), html);
         const diff = line - scrollThreshold;
         const posY = Math.max((basePosY + (FONT_SIZE * diff)) * scale, 0);
 
