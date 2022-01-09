@@ -8,6 +8,7 @@ function CodeHighlighter({
     codeHtml,
     totalLines,
     currentLine,
+    fileName = null,
 }) {
     const lines = new Array(totalLines).fill(null).map((v, index) => ((
         <span
@@ -36,58 +37,90 @@ function CodeHighlighter({
             />
             <body
                 style={{
-                    width: `${WIDTH / scale}px`,
-                    height: `${HEIGHT / scale}px`,
-                    background: '#272822',
-                    transform: `scale(${scale})`,
-                    transformOrigin: '0% 0% 0px',
-                    margin: 0,
+                    backgroundColor: '#272822',
                     color: 'white',
-                    fontSize: `${FONT_SIZE}px`,
-                    lineHeight: '1em',
+                    margin: 0,
                 }}
             >
+                {fileName && (
+                    <div
+                        style={{
+                            width: '100%',
+                            height: '17px',
+                            backgroundColor: '#404040',
+                            position: 'fixed',
+                            transform: `scale(${scale})`,
+                            transformOrigin: '0% 0% 0px',
+                            zIndex: 2,
+                            top: 0,
+                        }}
+                    >
+                        <div
+                            style={{
+                                backgroundColor: '#272822',
+                                display: 'table',
+                                padding: '0px 5px',
+                                // border: '1px solid #22221f',
+                                borderBottom: '2px solid #44463a',
+                                fontSize: '12px',
+                            }}
+                        >
+                            <p>{fileName}</p>
+                        </div>
+                    </div>
+                )}
                 <div
                     style={{
-                        // background: '#272822',
-                        display: 'flex',
-                        margin: `${5 * scale}px 0 0 2px`,
+                        width: `${WIDTH / scale}px`,
+                        height: `${HEIGHT / scale}px`,
+                        transform: `scale(${scale})`,
+                        transformOrigin: '0% 0% 0px',
+                        fontSize: `${FONT_SIZE}px`,
+                        lineHeight: '1em',
                     }}
                 >
                     <div
                         style={{
-                            width: '100%',
-                            position: 'absolute',
-                            height: `${FONT_SIZE}px`,
-                            backgroundColor: '#44463a',
-                            zIndex: -1,
-                            marginTop: `${currentLine * FONT_SIZE}px`,
-                        }}
-                    />
-                    <div
-                        style={{
-                            fontFamily,
-                            display: 'grid',
-                            margin: '0 5px 0 2px',
-                            color: '#DD6',
+                            // background: '#272822',
+                            display: 'flex',
+                            margin: `${(fileName ? 20 : 5) * scale}px 0 0 2px`,
                         }}
                     >
-                        {lines}
-                    </div>
-                    <pre
-                        style={{
-                            margin: 0,
-                        }}
-                    >
-                        <code
+                        <div
                             style={{
-                                fontFamily,
-                            }}
-                            dangerouslySetInnerHTML={{
-                                __html: codeHtml,
+                                width: '100%',
+                                position: 'absolute',
+                                height: `${FONT_SIZE}px`,
+                                backgroundColor: '#44463a',
+                                zIndex: -1,
+                                marginTop: `${currentLine * FONT_SIZE}px`,
                             }}
                         />
-                    </pre>
+                        <div
+                            style={{
+                                fontFamily,
+                                display: 'grid',
+                                margin: '0 5px 0 2px',
+                                color: '#DD6',
+                            }}
+                        >
+                            {lines}
+                        </div>
+                        <pre
+                            style={{
+                                margin: 0,
+                            }}
+                        >
+                            <code
+                                style={{
+                                    fontFamily,
+                                }}
+                                dangerouslySetInnerHTML={{
+                                    __html: codeHtml,
+                                }}
+                            />
+                        </pre>
+                    </div>
                 </div>
             </body>
         </html>

@@ -28,7 +28,8 @@ const generateHtml = (
     currentLine,
     totalLines,
     language,
-    scale
+    scale,
+    fileName
 ) => {
     loadLanguages([language]);
     const codeHtml = Prism.highlight(
@@ -41,6 +42,7 @@ const generateHtml = (
     const reactElement = React.createElement(CodeHighlighter, {
         scale,
         codeHtml,
+        fileName,
         totalLines,
         currentLine,
     }, null);

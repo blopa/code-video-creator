@@ -4,7 +4,7 @@ const path = require("path");
 const { PuppeteerScreenRecorder } = require('puppeteer-screen-recorder');
 const {
     readFileSync,
-    // writeFileSync,
+    writeFileSync,
     // mkdirSync,
     // rmdirSync,
 } = require('fs');
@@ -225,9 +225,11 @@ const generateFiles = async (
         lineSpeed = 1,
         blinkTextBar = true,
         scale = SCALE,
+        showFileName = false,
     } = {}
 ) => {
     const sourceCode = readFileSync(filePath, { encoding: 'utf8' });
+    const fileName = path.basename(filePath);
 
     // const data = readFileSync(filePath, { encoding: 'utf8' });
     // const code = prettier.format(data, { parser: "babel" });
@@ -516,10 +518,11 @@ const generateFiles = async (
             line,
             lines.length + scrollThreshold,
             language,
-            scale
+            scale,
+            showFileName ? fileName : null
         );
 
-        // writeFileSync(path.resolve(__dirname, '..', 'html', `index-${line}.html`), html);
+        writeFileSync(path.resolve(__dirname, '..', 'html', `index-${line}.html`), html);
         const diff = line - scrollThreshold;
         const posY = Math.max((basePosY + (FONT_SIZE * diff)) * scale, 0);
 
