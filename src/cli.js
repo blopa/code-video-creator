@@ -1,9 +1,10 @@
 #!/usr/bin/env node
+require('dotenv').config();
 const minimist = require("minimist");
 const generateFiles = require('./script');
 const { SCALE } = require('./constants');
 const params = minimist(process.argv, {
-    boolean: ['smallTabs', 'blinkTextBar', 'showFileName'],
+    boolean: ['smallTabs', 'blinkTextBar', 'showFileName', 'withSpeech'],
 });
 const filePath = params['_'][2] || './examples/Test.jsx';
 
@@ -15,15 +16,17 @@ const {
     blinkTextBar = true,
     scale = SCALE,
     showFileName = false,
+    withSpeech = false,
 } = params;
 
 if (
     typeof smallTabs !== 'boolean'
     || typeof blinkTextBar !== 'boolean'
     || typeof showFileName !== 'boolean'
-    || !Number.isInteger(typingSpeed)
-    || !Number.isInteger(lineSpeed)
-    || !Number.isInteger(scale)
+    || typeof withSpeech !== 'boolean'
+    || Number.isNaN(typingSpeed)
+    || Number.isNaN(lineSpeed)
+    || Number.isNaN(scale)
     || !filePath
 ) {
     console.error('Invalid arguments', {
@@ -34,6 +37,7 @@ if (
         lineSpeed,
         blinkTextBar,
         showFileName,
+        withSpeech,
     })
 } else {
     generateFiles(
@@ -44,6 +48,7 @@ if (
             lineSpeed,
             blinkTextBar,
             showFileName,
+            withSpeech,
         }
     );
 }

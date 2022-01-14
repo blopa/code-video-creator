@@ -30,6 +30,8 @@
     "@babel/preset-env": "^7.16.8",
     "@babel/preset-react": "^7.16.7",
     "@babel/register": "^7.16.9",
+    "@google-cloud/text-to-speech": "^3.4.0",
+    "dotenv": "^11.0.0",
     "esm": "^3.2.25",
     "jsdom": "^19.0.0",
     "minimist": "^1.2.5",

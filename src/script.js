@@ -8,7 +8,8 @@ const {
     // mkdirSync,
     // rmdirSync,
 } = require('fs');
-const { generateHtml, getRandomBetween } = require('./utils');
+const { generateHtml, getRandomBetween } = require('./utils.js');
+const convertTextToSpeech = require("./textToSpeech.js");
 
 const {
     ADD,
@@ -24,7 +25,7 @@ const {
     FONT_SIZE,
     MAX_LINES,
     MOVE_DOWN,
-    LINE_DURATION,
+    LINE_DURATION, SPEAK,
 } = require('./constants');
 
 const getExtraWaitActionArray = (
@@ -226,6 +227,7 @@ const generateFiles = async (
         blinkTextBar = true,
         scale = SCALE,
         showFileName = false,
+        withSpeech = false,
     } = {}
 ) => {
     const sourceCode = readFileSync(filePath, { encoding: 'utf8' });
@@ -294,7 +296,7 @@ const generateFiles = async (
                     line,
                     paste = 'false',
                     // lineQty = '1',
-                ] = command.trim().split(',');
+                ] = command.trim().split(';');
                 mainAction = action.toUpperCase();
                 lineOffset += 1;
                 i -= 1;
@@ -345,6 +347,14 @@ const generateFiles = async (
 
                     case LINE_DURATION: {
                         lineDurMplier = Number.parseFloat(line);
+                        continue;
+                    }
+
+                    case SPEAK: {
+                        if (withSpeech) {
+                            await convertTextToSpeech(line, lineNumber);
+                            extraWait = 1;
+                        }
                         continue;
                     }
                 }
