@@ -7,3 +7,5 @@ node_modules/*
 html
 output.mp4
 keys.json
+*.mp3
+*.mp4
