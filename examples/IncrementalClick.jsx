@@ -4,8 +4,8 @@ import { useState } from "react";
 
 function IncrementalClick() {
     //# speak;Then instanciate a local variable, and it's setter with useState.
-    //# speak;This is the value that it will be displayed on the page and incremented on click.
     const [val, setVal] = useState(0);
+    //# speak;This is the value that it will be displayed on the page and incremented on click.
 
     //# speak;This function will return a JSX wrapped on a "deev".
     return (

@@ -1,5 +1,6 @@
 const textToSpeech = require('@google-cloud/text-to-speech');
 const { writeFileSync } = require("fs");
+const mp3Duration = require('mp3-duration');
 const client = new textToSpeech.TextToSpeechClient();
 
 const convertTextToSpeech = async (
@@ -30,7 +31,7 @@ const convertTextToSpeech = async (
             ],
             pitch,
             speakingRate,
-            audioEncoding: "MP3"
+            audioEncoding: "LINEAR16"
         },
     };
 
@@ -38,7 +39,11 @@ const convertTextToSpeech = async (
     const [response] = await client.synthesizeSpeech(request);
 
     // Write the binary audio content to a local file
-    await writeFileSync('output-' + index + '.mp3', response.audioContent, 'binary');
+    const fileName = 'output-' + index + '.wav';
+    await writeFileSync(fileName, response.audioContent, 'binary');
+    const duration = await mp3Duration(response.audioContent);
+
+    return [duration, fileName];
 };
 
 module.exports = convertTextToSpeech;

@@ -5,18 +5,27 @@ const generateFiles = require('./script');
 const { SCALE } = require('./constants');
 const params = minimist(process.argv, {
     boolean: ['smallTabs', 'blinkTextBar', 'showFileName', 'withSpeech'],
+    default: {
+        smallTabs: false,
+        typingSpeed: 1,
+        lineSpeed: 1,
+        blinkTextBar: true,
+        scale: SCALE,
+        showFileName: false,
+        withSpeech: false,
+    }
 });
 const filePath = params['_'][2] || './examples/Test.jsx';
 
 // config
 const {
-    smallTabs = false,
-    typingSpeed = 1,
-    lineSpeed = 1,
-    blinkTextBar = true,
-    scale = SCALE,
-    showFileName = false,
-    withSpeech = false,
+    smallTabs,
+    typingSpeed,
+    lineSpeed,
+    blinkTextBar,
+    scale,
+    showFileName,
+    withSpeech,
 } = params;
 
 if (
