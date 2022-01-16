@@ -2,9 +2,9 @@ const puppeteer = require('puppeteer');
 // const prettier = require('prettier');
 const path = require("path");
 const { PuppeteerScreenRecorder } = require('puppeteer-screen-recorder');
-const createAudioBuffer = require('audio-buffer-from');
 const audioBufferToWav = require('audiobuffer-to-wav');
 const ffmpeg = require('fluent-ffmpeg');
+const AudioBuffer = require('audio-buffer')
 const {
     readFileSync,
     createWriteStream,
@@ -20,6 +20,7 @@ const convertTextToSpeech = require("./textToSpeech.js");
 const {
     ADD,
     WAIT,
+    SPEAK,
     WIDTH,
     SCALE,
     HEIGHT,
@@ -31,11 +32,17 @@ const {
     FONT_SIZE,
     MAX_LINES,
     MOVE_DOWN,
-    LINE_DURATION, SPEAK,
+    LINE_DURATION,
 } = require('./constants');
 
 const createWavBuffer = (duration, fileName) => {
-    const audioBuffer = createAudioBuffer({ duration });
+    // const audioBuffer = createAudioBuffer({ duration });
+    const audioBuffer = new AudioBuffer(null, {
+        length: duration * 44100,
+        duration,
+        numberOfChannels: 2,
+        sampleRate: 44100,
+    });
     const wav = audioBufferToWav(audioBuffer);
     const chunk = new Uint8Array(wav);
     appendFileSync(fileName, Buffer.from(chunk));
@@ -604,6 +611,7 @@ const generateFiles = async (
     if (withSpeech) {
         let videoDuration = 0;
         let audioDuration = 1;
+        let audioRounded = 1;
         Object.entries(lineRenderedTimes).map(([key, val]) => videoDuration += val);
         createWavBuffer(1, 'output-begin.wav');
         console.log({ lineRenderedTimes, linesWithSpeech });
@@ -616,6 +624,7 @@ const generateFiles = async (
                 console.log({ duration, speechDuration, line });
                 const newDuration = Math.max(duration - speechDuration, 0.05);
                 audioDuration += newDuration + speechDuration;
+                audioRounded += Math.ceil(newDuration + speechDuration);
                 createWavBuffer(newDuration, name);
                 allAudios = [
                     ...allAudios,
@@ -624,6 +633,7 @@ const generateFiles = async (
                 ];
             } else {
                 audioDuration += duration;
+                audioRounded += Math.ceil(duration);
                 const name = `output-${line}.wav`;
                 createWavBuffer(duration, name);
                 allAudios = [
@@ -633,7 +643,7 @@ const generateFiles = async (
             }
         });
 
-        console.log({ videoDuration, audioDuration });
+        console.log({ videoDuration, audioDuration, audioRounded });
         console.log('concatenating audios...');
         const command = ffmpeg('output-begin.wav');
         allAudios.forEach((file, index) => {
@@ -642,7 +652,7 @@ const generateFiles = async (
                 return;
             }
 
-            command.input(file);
+            command.mergeAdd(file);
         });
         console.log({allAudios});
     }
