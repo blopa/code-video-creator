@@ -13,5 +13,6 @@ module.exports = {
     MOVE_UP: 'MOVE_UP',
     MOVE_DOWN: 'MOVE_DOWN',
     WAIT: 'WAIT',
+    ADD_SUB: 'ADD_SUB',
     LINE_DURATION: 'LINE_DURATION',
 };
