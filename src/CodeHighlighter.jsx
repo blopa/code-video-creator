@@ -9,6 +9,7 @@ function CodeHighlighter({
     totalLines,
     currentLine,
     fileName = null,
+    subs = null,
 }) {
     const lines = new Array(totalLines).fill(null).map((v, index) => ((
         <span
@@ -79,6 +80,21 @@ function CodeHighlighter({
                         lineHeight: '1em',
                     }}
                 >
+                    {subs && (
+                        <div
+                            style={{
+                                position: 'absolute',
+                                top: `${(HEIGHT / scale) - (22 * scale)}px`,
+                                textAlign: 'center',
+                                margin: '0 auto',
+                                width: '100%',
+                                fontSize: '1.5em',
+                                boxShadow: '5px 10px #888888',
+                            }}
+                        >
+                            <p>{subs}</p>
+                        </div>
+                    )}
                     <div
                         style={{
                             // background: '#272822',

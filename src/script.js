@@ -4,11 +4,11 @@ const path = require("path");
 const { PuppeteerScreenRecorder } = require('puppeteer-screen-recorder');
 const {
     readFileSync,
-    // writeFileSync,
+    writeFileSync,
     // mkdirSync,
     // rmdirSync,
 } = require('fs');
-const { generateHtml, getRandomBetween } = require('./utils');
+const { generateHtml, getRandomBetween } = require('./utils.js');
 
 const {
     ADD,
@@ -20,12 +20,13 @@ const {
     SELECT,
     SKIP_TO,
     MOVE_UP,
+    ADD_SUB,
     REPLACE,
     FONT_SIZE,
     MAX_LINES,
     MOVE_DOWN,
     LINE_DURATION,
-} = require('./constants');
+} = require('./constants.js');
 
 const getExtraWaitActionArray = (
     codeLine,
@@ -93,7 +94,10 @@ const getTypeInActionArray = (
     lineNumber,
     typingSpeed,
     mainAction,
-    lineSpeed
+    lineSpeed,
+    extraWait,
+    blinkTextBar,
+    blinkDuration
 ) => {
     let codeLines = [];
 
@@ -107,6 +111,17 @@ const getTypeInActionArray = (
         action: mainAction,
         duration: 0.4 * lineSpeed, // seconds
     });
+
+    codeLines = [
+        ...codeLines,
+        ...getExtraWaitActionArray(
+            accCodeLine,
+            lineNumber,
+            extraWait,
+            blinkTextBar,
+            blinkDuration
+        ),
+    ];
 
     codeLines.push({
         code: `${accCodeLine}`,
@@ -160,7 +175,9 @@ const getReplaceActionArray = (
     paste,
     codeToReplace,
     typingSpeed,
-    blinkDuration
+    blinkDuration,
+    extraWait,
+    blinkTextBar,
 ) => {
     let codeLines = [];
 
@@ -184,7 +201,10 @@ const getReplaceActionArray = (
                 lineNumber,
                 typingSpeed,
                 REPLACE,
-                lineSpeed
+                lineSpeed,
+                extraWait,
+                blinkTextBar,
+                blinkDuration
             ),
         ];
     } else {
@@ -226,6 +246,7 @@ const generateFiles = async (
         blinkTextBar = true,
         scale = SCALE,
         showFileName = false,
+        withSpeech = false,
     } = {}
 ) => {
     const sourceCode = readFileSync(filePath, { encoding: 'utf8' });
@@ -264,6 +285,7 @@ const generateFiles = async (
     let extraWait = 0;
     const blinkDuration = 0.2;
     const offsetMap = {};
+    const linesWithSubs = {};
     for (let i = 0; (i + lineOffset) < lines.length; i++) {
         offsetMap[i + lineOffset] = lineOffset;
         let mainAction = ADD;
@@ -294,7 +316,7 @@ const generateFiles = async (
                     line,
                     paste = 'false',
                     // lineQty = '1',
-                ] = command.trim().split(',');
+                ] = command.trim().split(';');
                 mainAction = action.toUpperCase();
                 lineOffset += 1;
                 i -= 1;
@@ -316,7 +338,9 @@ const generateFiles = async (
                                 paste,
                                 codeToReplace,
                                 typingSpeed,
-                                blinkDuration
+                                blinkDuration,
+                                extraWait,
+                                blinkTextBar,
                             ),
                         ];
 
@@ -347,6 +371,11 @@ const generateFiles = async (
                         lineDurMplier = Number.parseFloat(line);
                         continue;
                     }
+
+                    case ADD_SUB: {
+                        linesWithSubs[lineNumber + 1] = line;
+                        continue;
+                    }
                 }
             } else {
                 // do not have command
@@ -357,11 +386,7 @@ const generateFiles = async (
                         lineNumber,
                         typingSpeed,
                         ADD,
-                        lineSpeed * lineDurMplier
-                    ),
-                    ...getExtraWaitActionArray(
-                        codeLine,
-                        lineNumber,
+                        lineSpeed * lineDurMplier,
                         extraWait,
                         blinkTextBar,
                         blinkDuration
@@ -513,16 +538,23 @@ const generateFiles = async (
             continue;
         }
 
+
+        let subs = true;
+        if (linesWithSubs[line]?.length) {
+            subs = linesWithSubs[line];
+        }
+
         const html = generateHtml(
             codeToParse.filter((s) => s !== null).join('\n'),
             line,
             lines.length + scrollThreshold,
             language,
             scale,
-            showFileName ? fileName : null
+            showFileName ? fileName : null,
+            subs
         );
 
-        // writeFileSync(path.resolve(__dirname, '..', 'html', `index-${line}.html`), html);
+        writeFileSync(path.resolve(__dirname, '..', 'html', `index-${line}.html`), html);
         const diff = line - scrollThreshold;
         const posY = Math.max((basePosY + (FONT_SIZE * diff)) * scale, 0);
 
