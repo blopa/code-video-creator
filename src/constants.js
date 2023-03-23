@@ -13,5 +13,6 @@ module.exports = {
     MOVE_UP: 'MOVE_UP',
     MOVE_DOWN: 'MOVE_DOWN',
     WAIT: 'WAIT',
+    SPEAK: 'SPEAK',
     LINE_DURATION: 'LINE_DURATION',
 };

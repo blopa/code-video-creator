@@ -2,17 +2,25 @@ const puppeteer = require('puppeteer');
 // const prettier = require('prettier');
 const path = require("path");
 const { PuppeteerScreenRecorder } = require('puppeteer-screen-recorder');
+const audioBufferToWav = require('audiobuffer-to-wav');
+const ffmpeg = require('fluent-ffmpeg');
+const AudioBuffer = require('audio-buffer')
 const {
     readFileSync,
-    // writeFileSync,
+    createWriteStream,
+    createReadStream,
+    writeFileSync,
+    appendFileSync,
     // mkdirSync,
     // rmdirSync,
 } = require('fs');
-const { generateHtml, getRandomBetween } = require('./utils');
+const { generateHtml, getRandomBetween } = require('./utils.js');
+const convertTextToSpeech = require("./textToSpeech.js");
 
 const {
     ADD,
     WAIT,
+    SPEAK,
     WIDTH,
     SCALE,
     HEIGHT,
@@ -26,6 +34,20 @@ const {
     MOVE_DOWN,
     LINE_DURATION,
 } = require('./constants');
+
+const createWavBuffer = (duration, fileName) => {
+    // const audioBuffer = createAudioBuffer({ duration });
+    const audioBuffer = new AudioBuffer(null, {
+        length: duration * 44100,
+        duration,
+        numberOfChannels: 2,
+        sampleRate: 44100,
+    });
+    const wav = audioBufferToWav(audioBuffer);
+    const chunk = new Uint8Array(wav);
+    appendFileSync(fileName, Buffer.from(chunk));
+    // return Buffer.from(chunk);
+}
 
 const getExtraWaitActionArray = (
     codeLine,
@@ -93,7 +115,10 @@ const getTypeInActionArray = (
     lineNumber,
     typingSpeed,
     mainAction,
-    lineSpeed
+    lineSpeed,
+    extraWait,
+    blinkTextBar,
+    blinkDuration
 ) => {
     let codeLines = [];
 
@@ -107,6 +132,17 @@ const getTypeInActionArray = (
         action: mainAction,
         duration: 0.4 * lineSpeed, // seconds
     });
+
+    codeLines = [
+        ...codeLines,
+        ...getExtraWaitActionArray(
+            accCodeLine,
+            lineNumber,
+            extraWait,
+            blinkTextBar,
+            blinkDuration
+        ),
+    ];
 
     codeLines.push({
         code: `${accCodeLine}`,
@@ -160,7 +196,9 @@ const getReplaceActionArray = (
     paste,
     codeToReplace,
     typingSpeed,
-    blinkDuration
+    blinkDuration,
+    extraWait,
+    blinkTextBar,
 ) => {
     let codeLines = [];
 
@@ -184,7 +222,10 @@ const getReplaceActionArray = (
                 lineNumber,
                 typingSpeed,
                 REPLACE,
-                lineSpeed
+                lineSpeed,
+                extraWait,
+                blinkTextBar,
+                blinkDuration
             ),
         ];
     } else {
@@ -226,6 +267,7 @@ const generateFiles = async (
         blinkTextBar = true,
         scale = SCALE,
         showFileName = false,
+        withSpeech = false,
     } = {}
 ) => {
     const sourceCode = readFileSync(filePath, { encoding: 'utf8' });
@@ -264,6 +306,7 @@ const generateFiles = async (
     let extraWait = 0;
     const blinkDuration = 0.2;
     const offsetMap = {};
+    const linesWithSpeech = {};
     for (let i = 0; (i + lineOffset) < lines.length; i++) {
         offsetMap[i + lineOffset] = lineOffset;
         let mainAction = ADD;
@@ -294,7 +337,7 @@ const generateFiles = async (
                     line,
                     paste = 'false',
                     // lineQty = '1',
-                ] = command.trim().split(',');
+                ] = command.trim().split(';');
                 mainAction = action.toUpperCase();
                 lineOffset += 1;
                 i -= 1;
@@ -316,7 +359,9 @@ const generateFiles = async (
                                 paste,
                                 codeToReplace,
                                 typingSpeed,
-                                blinkDuration
+                                blinkDuration,
+                                extraWait,
+                                blinkTextBar,
                             ),
                         ];
 
@@ -335,6 +380,7 @@ const generateFiles = async (
 
                     case WAIT: {
                         extraWait = Number.parseInt(line, 10);
+
                         continue;
                     }
 
@@ -347,6 +393,15 @@ const generateFiles = async (
                         lineDurMplier = Number.parseFloat(line);
                         continue;
                     }
+
+                    case SPEAK: {
+                        if (withSpeech) {
+                            const [duration, fileName] = await convertTextToSpeech(line, lineNumber + 1);
+                            extraWait = Math.max(duration - 1, 0.1);
+                            linesWithSpeech[lineNumber + 1] = [duration, fileName];
+                        }
+                        continue;
+                    }
                 }
             } else {
                 // do not have command
@@ -357,11 +412,7 @@ const generateFiles = async (
                         lineNumber,
                         typingSpeed,
                         ADD,
-                        lineSpeed * lineDurMplier
-                    ),
-                    ...getExtraWaitActionArray(
-                        codeLine,
-                        lineNumber,
+                        lineSpeed * lineDurMplier,
                         extraWait,
                         blinkTextBar,
                         blinkDuration
@@ -456,11 +507,13 @@ const generateFiles = async (
     await page.waitForTimeout(1000 * lineSpeed);
     console.log('start recording...');
 
+    const lineRenderedTimes = {};
     let prevPosY = null;
     let prevLine = null;
     const codeToParse = [];
     const basePosY = 7;
     const scrollThreshold = Math.round((MAX_LINES / scale) / 2) + 1;
+    let startTime = new Date();
     for (const codeObj of codeLines) {
         const {
             code,
@@ -505,7 +558,9 @@ const generateFiles = async (
         }
 
         if (prevLine !== line) {
+            lineRenderedTimes[line] = (new Date() - startTime) / 1000;
             prevLine = line;
+            startTime = new Date();
             console.log(`rendering line ${line + 1}...`);
         }
 
@@ -552,6 +607,55 @@ const generateFiles = async (
     await recorder.stop();
     console.log('close browser');
     await browser.close();
+
+    if (withSpeech) {
+        let videoDuration = 0;
+        let audioDuration = 1;
+        let audioRounded = 1;
+        Object.entries(lineRenderedTimes).map(([key, val]) => videoDuration += val);
+        createWavBuffer(1, 'output-begin.wav');
+        console.log({ lineRenderedTimes, linesWithSpeech });
+        console.log('creating audio...');
+        let allAudios = [];
+        Object.entries(lineRenderedTimes).forEach(([line, duration], index) => {
+            if (linesWithSpeech[line]?.length) {
+                const name = `output-${line}-${index}.wav`;
+                const [speechDuration, speechFileName] = linesWithSpeech[line];
+                console.log({ duration, speechDuration, line });
+                const newDuration = Math.max(duration - speechDuration, 0.05);
+                audioDuration += newDuration + speechDuration;
+                audioRounded += Math.ceil(newDuration + speechDuration);
+                createWavBuffer(newDuration, name);
+                allAudios = [
+                    ...allAudios,
+                    speechFileName,
+                    name,
+                ];
+            } else {
+                audioDuration += duration;
+                audioRounded += Math.ceil(duration);
+                const name = `output-${line}.wav`;
+                createWavBuffer(duration, name);
+                allAudios = [
+                    ...allAudios,
+                    name,
+                ];
+            }
+        });
+
+        console.log({ videoDuration, audioDuration, audioRounded });
+        console.log('concatenating audios...');
+        const command = ffmpeg('output-begin.wav');
+        allAudios.forEach((file, index) => {
+            if (index === allAudios.length - 1) {
+                command.mergeToFile('merged.wav');
+                return;
+            }
+
+            command.mergeAdd(file);
+        });
+        console.log({allAudios});
+    }
 };
 
 module.exports = generateFiles;
